@@ -1,0 +1,68 @@
+# Caddy Configuration for Real Estate POC
+# HTTPS Reverse Proxy for all services
+
+{
+	# Global options
+	auto_https off
+	admin off
+}
+
+# Web Frontend (Next.js) - Port 443 (default HTTPS)
+https://localhost {
+	tls /certs/localhost.pem /certs/localhost-key.pem
+
+	# NextAuth routes must be handled by Next.js
+	handle /api/auth/* {
+		reverse_proxy http://host.docker.internal:3000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote}
+			header_up X-Forwarded-For {remote}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	# Backend API routes
+	handle_path /api/* {
+		reverse_proxy http://host.docker.internal:3002 {
+			header_up Host {host}
+			header_up X-Real-IP {remote}
+			header_up X-Forwarded-For {remote}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+
+	handle {
+		reverse_proxy http://host.docker.internal:3000 {
+			header_up Host {host}
+			header_up X-Real-IP {remote}
+			header_up X-Forwarded-For {remote}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+}
+
+# Zitadel OIDC - Port 8443
+https://localhost:8443 {
+	tls /certs/localhost.pem /certs/localhost-key.pem
+	
+	reverse_proxy http://realstate-zitadel:8080 {
+		header_up Host {host}
+		header_up X-Real-IP {remote}
+		header_up X-Forwarded-For {remote}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}
+
+
+
+# MinIO Console - Port 9001
+https://localhost:9001 {
+	tls /certs/localhost.pem /certs/localhost-key.pem
+	
+	reverse_proxy http://realstate-minio:9001 {
+		header_up Host {host}
+		header_up X-Real-IP {remote}
+		header_up X-Forwarded-For {remote}
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

@@ -1,0 +1,41 @@
+# Configuració de Zitadel per permetre HTTP (Dev Mode)
+# Aquesta configuració permet accedir a la UI sense HTTPS
+
+Log:
+  Level: info
+
+ExternalSecure: false
+ExternalDomain: localhost
+ExternalPort: 8080
+
+TLS:
+  Enabled: false
+
+# Permetre HTTP per desenvolupament
+DefaultInstance:
+  SecureCookie: false
+  
+# Configuració de la consola
+Console:
+  ShortCache:
+    MaxAge: 0s
+    SharedMaxAge: 0s
+  LongCache:
+    MaxAge: 12h
+    SharedMaxAge: 168h
+
+Database:
+  Postgres:
+    Host: realstate-postgres
+    Port: 5432
+    Database: zitadel
+    User:
+      Username: zitadel
+      Password: zitadelpassword
+      SSL:
+        Mode: disable
+    Admin:
+      Username: postgres
+      Password: postgrespassword
+      SSL:
+        Mode: disable

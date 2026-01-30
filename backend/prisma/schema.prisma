@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String   @id @default(uuid())
+  email             String   @unique
+  name              String?
+  passwordHash      String?  @map("password_hash")
+  authProvider      String   @map("auth_provider") // 'email', 'google', 'facebook'
+  providerId        String?  @map("provider_id")
+  identityVerified  Boolean  @default(false) @map("identity_verified")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  properties                Property[]
+  contacts                  Contact[]
+  propertyViews             PropertyView[]
+  favorites                 Favorite[]
+  ratingsGiven              Rating[]                  @relation("RatingsGiven")
+  ratingsReceived           Rating[]                  @relation("RatingsReceived")
+  identityVerifications     IdentityVerification[]
+  propertyVerifications     PropertyVerification[]    @relation("PropertyVerificationUser")
+  reviewedVerifications     PropertyVerification[]    @relation("PropertyVerificationReviewer")
+  
+  @@unique([authProvider, providerId], name: "unique_provider_id")
+  @@index([email])
+  @@map("users")
+}
+
+model Property {
+  id                  String   @id @default(uuid())
+  ownerId             String   @map("owner_id")
+  elasticsearchId     String   @unique @map("elasticsearch_id")
+  status              String   @default("active") // 'active', 'paused', 'closed'
+  isPrivate           Boolean  @default(false) @map("is_private")
+  accessRequirements  Json?    @map("access_requirements")
+  createdAt           DateTime @default(now()) @map("created_at")
+  updatedAt           DateTime @updatedAt @map("updated_at")
+  
+  owner                    User                      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  contacts                 Contact[]
+  propertyViews            PropertyView[]
+  favorites                Favorite[]
+  ratings                  Rating[]
+  propertyVerifications    PropertyVerification[]
+  
+  @@index([ownerId])
+  @@index([status])
+  @@index([elasticsearchId])
+  @@map("properties")
+}
+
+model Rating {
+  id           String   @id @default(uuid())
+  fromUserId   String   @map("from_user_id")
+  toUserId     String   @map("to_user_id")
+  propertyId   String?  @map("property_id")
+  rating       Int      @db.SmallInt
+  comment      String?  @db.Text
+  createdAt    DateTime @default(now()) @map("created_at")
+  
+  fromUser     User      @relation("RatingsGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser       User      @relation("RatingsReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+  property     Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  
+  @@unique([fromUserId, toUserId, propertyId])
+  @@index([toUserId])
+  @@index([propertyId])
+  @@map("ratings")
+}
+
+model IdentityVerification {
+  id                    String    @id @default(uuid())
+  userId                String    @map("user_id")
+  stripeVerificationId  String?   @unique @map("stripe_verification_id")
+  status                String    @default("pending") // 'pending', 'verified', 'rejected'
+  documents             Json?
+  rejectionReason       String?   @map("rejection_reason") @db.Text
+  createdAt             DateTime  @default(now()) @map("created_at")
+  verifiedAt            DateTime? @map("verified_at")
+  
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
+  @@map("identity_verifications")
+}
+
+model PropertyVerification {
+  id               String    @id @default(uuid())
+  propertyId       String    @map("property_id")
+  userId           String    @map("user_id")
+  status           String    @default("pending") // 'pending', 'verified', 'rejected'
+  documents        Json
+  reviewedBy       String?   @map("reviewed_by")
+  rejectionReason  String?   @map("rejection_reason") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at")
+  verifiedAt       DateTime? @map("verified_at")
+  
+  property         Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user             User      @relation("PropertyVerificationUser", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer         User?     @relation("PropertyVerificationReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+  
+  @@index([propertyId])
+  @@index([status])
+  @@map("property_verifications")
+}
+
+model Contact {
+  id         String   @id @default(uuid())
+  propertyId String   @map("property_id")
+  userId     String   @map("user_id")
+  message    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([propertyId])
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("contacts")
+}
+
+model PropertyView {
+  id         String   @id @default(uuid())
+  propertyId String   @map("property_id")
+  userId     String?  @map("user_id")
+  ipAddress  String?  @map("ip_address") @db.VarChar(45)
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  
+  @@index([propertyId])
+  @@index([createdAt(sort: Desc)])
+  @@map("property_views")
+}
+
+model Favorite {
+  id         String   @id @default(uuid())
+  propertyId String   @map("property_id")
+  userId     String   @map("user_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+  
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([propertyId, userId])
+  @@index([userId])
+  @@index([propertyId])
+  @@map("favorites")
+}
