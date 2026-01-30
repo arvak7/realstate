@@ -77,8 +77,8 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
     try {
         const { id } = req.params;
 
-        // Get from PostgreSQL
-        const property = await prisma.property.findUnique({
+        // Try to find by PostgreSQL ID first, then by Elasticsearch ID
+        let property = await prisma.property.findUnique({
             where: { id },
             include: {
                 owner: {
@@ -91,6 +91,23 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
                 }
             }
         });
+
+        // If not found by PostgreSQL ID, try finding by Elasticsearch ID
+        if (!property) {
+            property = await prisma.property.findFirst({
+                where: { elasticsearchId: id },
+                include: {
+                    owner: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            identityVerified: true
+                        }
+                    }
+                }
+            });
+        }
 
         if (!property) {
             return res.status(404).json({ error: 'Property not found' });
@@ -105,7 +122,7 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
         // Increment view count
         await prisma.propertyView.create({
             data: {
-                propertyId: id,
+                propertyId: property.id,
                 userId: req.auth?.payload?.sub || null,
                 ipAddress: req.ip
             }
@@ -259,14 +276,25 @@ export const deleteProperty = async (req: AuthenticatedRequest, res: Response) =
 
 export const generateUploadUrl = async (req: AuthenticatedRequest, res: Response) => {
     try {
-        const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.jpg`;
+        const { contentType } = req.body || {};
+
+        // Determine file extension from content type
+        const extensionMap: Record<string, string> = {
+            'image/jpeg': 'jpg',
+            'image/png': 'png',
+            'image/webp': 'webp',
+        };
+        const extension = extensionMap[contentType] || 'jpg';
+
+        const filename = `${Date.now()}-${Math.random().toString(36).substring(7)}.${extension}`;
 
         // expiry 15 minutes
         const presignedUrl = await minioClient.presignedPutObject(MINIO_BUCKET, filename, 15 * 60);
         // We use env vars for constructing public URL because it might differ from internal docker URL
         const endpoint = process.env.MINIO_ENDPOINT || 'localhost';
         const port = process.env.MINIO_PORT || '9000';
-        const viewUrl = `http://${endpoint}:${port}/${MINIO_BUCKET}/${filename}`;
+        const protocol = process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http';
+        const viewUrl = `${protocol}://${endpoint}:${port}/${MINIO_BUCKET}/${filename}`;
 
         res.json({ uploadUrl: presignedUrl, filename, viewUrl });
     } catch (e) {

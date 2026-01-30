@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 interface Property {
     id: string;
@@ -59,9 +60,12 @@ export default function PropertyGrid() {
                         <h3 className="text-xl font-bold mb-2 text-gray-800">{property.basic_info.title}</h3>
                         <p className="text-gray-600 text-sm mb-4 line-clamp-2">{property.basic_info.description}</p>
                         {session ? (
-                            <button className="w-full mt-2 border-primary text-primary border rounded-lg py-2 text-sm hover:bg-blue-50 transition">
+                            <Link
+                                href={`/properties/${property.id}`}
+                                className="block w-full mt-2 border-primary text-primary border rounded-lg py-2 text-sm hover:bg-blue-50 transition text-center"
+                            >
                                 View Details
-                            </button>
+                            </Link>
                         ) : (
                             <div className="text-xs text-gray-400 italic text-center mt-2">Sign in to view details</div>
                         )}

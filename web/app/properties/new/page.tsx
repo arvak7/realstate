@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import ImageUploader, { UploadedImage } from "@/app/components/ImageUploader";
 
 export default function NewPropertyPage() {
     const { data: session } = useSession();
@@ -17,9 +18,9 @@ export default function NewPropertyPage() {
         rooms: "",
         square_meters: "",
         type: "pis",
-        municipality: "",
-        province: "",
-        autonomous_community: "",
+        municipality: "Barcelona",
+        province: "Barcelona",
+        autonomous_community: "Catalunya",
         floors: "",
         orientation: "",
         condition: "bon_estat",
@@ -29,6 +30,7 @@ export default function NewPropertyPage() {
         tags: [] as string[],
         isPrivate: false,
     });
+    const [images, setImages] = useState<UploadedImage[]>([]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -61,7 +63,7 @@ export default function NewPropertyPage() {
                     energy_label: formData.energy_label || undefined,
                 },
                 tags: formData.tags,
-                images: [],
+                images: images,
                 contact: {},
                 isPrivate: formData.isPrivate,
             };
@@ -410,6 +412,16 @@ export default function NewPropertyPage() {
                                     </label>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Imatges */}
+                        <div>
+                            <h2 className="text-xl font-bold text-gray-900 mb-4">Imatges</h2>
+                            <ImageUploader
+                                accessToken={(session as any)?.accessToken || ""}
+                                images={images}
+                                onChange={setImages}
+                            />
                         </div>
 
                         {/* Privacitat */}

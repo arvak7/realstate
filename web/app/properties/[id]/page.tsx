@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -15,45 +15,44 @@ interface PropertyDetail {
         email: string;
         identityVerified: boolean;
     };
-    data: {
-        basic_info: {
-            title: string;
-            description: string;
-            price: number;
-            rooms: number;
-            square_meters: number;
-            type: string;
-        };
-        location: {
-            municipality: string;
-            province: string;
-            autonomous_community: string;
-            address?: string;
-        };
-        characteristics?: {
-            floors?: number;
-            orientation?: string;
-            condition?: string;
-            has_elevator?: boolean;
-            is_furnished?: boolean;
-        };
-        energy?: {
-            energy_label?: string;
-            co2_emissions?: number;
-        };
-        tags?: string[];
-        images?: Array<{
-            url: string;
-            is_main: boolean;
-        }>;
-        contact?: {
-            phone?: string;
-            email?: string;
-        };
+    basic_info: {
+        title: string;
+        description: string;
+        price: number;
+        rooms: number;
+        square_meters: number;
+        type: string;
+    };
+    location: {
+        municipality: string;
+        province: string;
+        autonomous_community: string;
+        address?: string;
+    };
+    characteristics?: {
+        floors?: number;
+        orientation?: string;
+        condition?: string;
+        has_elevator?: boolean;
+        is_furnished?: boolean;
+    };
+    energy?: {
+        energy_label?: string;
+        co2_emissions?: number;
+    };
+    tags?: string[];
+    images?: Array<{
+        url: string;
+        is_main: boolean;
+    }>;
+    contact?: {
+        phone?: string;
+        email?: string;
     };
 }
 
-export default function PropertyDetailPage({ params }: { params: { id: string } }) {
+export default function PropertyDetailPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = use(params);
     const { data: session } = useSession();
     const router = useRouter();
     const [property, setProperty] = useState<PropertyDetail | null>(null);
@@ -62,12 +61,12 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
 
     useEffect(() => {
         fetchProperty();
-    }, [params.id]);
+    }, [id]);
 
     const fetchProperty = async () => {
         try {
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/properties/${params.id}`
+                `${process.env.NEXT_PUBLIC_API_URL}/properties/${id}`
             );
             if (response.ok) {
                 const data = await response.json();
@@ -112,7 +111,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
         );
     }
 
-    const images = property.data.images || [];
+    const images = property.images || [];
     const currentImage = images[currentImageIndex];
 
     return (
@@ -139,7 +138,7 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                                 {currentImage ? (
                                     <img
                                         src={currentImage.url}
-                                        alt={property.data.basic_info.title}
+                                        alt={property.basic_info.title}
                                         className="w-full h-full object-cover"
                                     />
                                 ) : (
@@ -209,76 +208,76 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                         {/* Property Info */}
                         <div className="bg-white rounded-xl shadow-md p-6">
                             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                                {property.data.basic_info.title}
+                                {property.basic_info.title}
                             </h1>
                             <p className="text-gray-600 mb-4">
-                                {property.data.location.municipality}, {property.data.location.province}
+                                {property.location.municipality}, {property.location.province}
                             </p>
 
                             <div className="flex items-center gap-6 mb-6 pb-6 border-b">
                                 <div>
                                     <span className="text-3xl font-bold text-blue-600">
-                                        {property.data.basic_info.price.toLocaleString("ca-ES")}€
+                                        {property.basic_info.price.toLocaleString("ca-ES")}€
                                     </span>
                                 </div>
                                 <div className="flex gap-4 text-gray-600">
-                                    <span>🛏️ {property.data.basic_info.rooms} habitacions</span>
-                                    <span>📐 {property.data.basic_info.square_meters} m²</span>
+                                    <span>🛏️ {property.basic_info.rooms} habitacions</span>
+                                    <span>📐 {property.basic_info.square_meters} m²</span>
                                 </div>
                             </div>
 
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900 mb-3">Descripció</h2>
                                 <p className="text-gray-700 whitespace-pre-line">
-                                    {property.data.basic_info.description}
+                                    {property.basic_info.description}
                                 </p>
                             </div>
                         </div>
 
                         {/* Characteristics */}
-                        {property.data.characteristics && (
+                        {property.characteristics && (
                             <div className="bg-white rounded-xl shadow-md p-6">
                                 <h2 className="text-xl font-bold text-gray-900 mb-4">
                                     Característiques
                                 </h2>
                                 <div className="grid grid-cols-2 gap-4">
-                                    {property.data.characteristics.floors && (
+                                    {property.characteristics.floors && (
                                         <div className="flex items-center gap-2">
                                             <span className="text-gray-600">Plantes:</span>
                                             <span className="font-semibold">
-                                                {property.data.characteristics.floors}
+                                                {property.characteristics.floors}
                                             </span>
                                         </div>
                                     )}
-                                    {property.data.characteristics.orientation && (
+                                    {property.characteristics.orientation && (
                                         <div className="flex items-center gap-2">
                                             <span className="text-gray-600">Orientació:</span>
                                             <span className="font-semibold">
-                                                {property.data.characteristics.orientation}
+                                                {property.characteristics.orientation}
                                             </span>
                                         </div>
                                     )}
-                                    {property.data.characteristics.condition && (
+                                    {property.characteristics.condition && (
                                         <div className="flex items-center gap-2">
                                             <span className="text-gray-600">Estat:</span>
                                             <span className="font-semibold">
-                                                {property.data.characteristics.condition}
+                                                {property.characteristics.condition}
                                             </span>
                                         </div>
                                     )}
-                                    {property.data.characteristics.has_elevator !== undefined && (
+                                    {property.characteristics.has_elevator !== undefined && (
                                         <div className="flex items-center gap-2">
                                             <span className="text-gray-600">Ascensor:</span>
                                             <span className="font-semibold">
-                                                {property.data.characteristics.has_elevator ? "Sí" : "No"}
+                                                {property.characteristics.has_elevator ? "Sí" : "No"}
                                             </span>
                                         </div>
                                     )}
-                                    {property.data.characteristics.is_furnished !== undefined && (
+                                    {property.characteristics.is_furnished !== undefined && (
                                         <div className="flex items-center gap-2">
                                             <span className="text-gray-600">Amoblat:</span>
                                             <span className="font-semibold">
-                                                {property.data.characteristics.is_furnished ? "Sí" : "No"}
+                                                {property.characteristics.is_furnished ? "Sí" : "No"}
                                             </span>
                                         </div>
                                     )}
@@ -287,11 +286,11 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                         )}
 
                         {/* Tags */}
-                        {property.data.tags && property.data.tags.length > 0 && (
+                        {property.tags && property.tags.length > 0 && (
                             <div className="bg-white rounded-xl shadow-md p-6">
                                 <h2 className="text-xl font-bold text-gray-900 mb-4">Etiquetes</h2>
                                 <div className="flex flex-wrap gap-2">
-                                    {property.data.tags.map((tag, idx) => (
+                                    {property.tags.map((tag, idx) => (
                                         <span
                                             key={idx}
                                             className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
@@ -342,22 +341,22 @@ export default function PropertyDetailPage({ params }: { params: { id: string } 
                                 </div>
                             )}
 
-                            {property.data.energy && (
+                            {property.energy && (
                                 <div className="mt-6 pt-6 border-t">
                                     <h3 className="font-semibold text-gray-900 mb-3">
                                         Eficiència Energètica
                                     </h3>
-                                    {property.data.energy.energy_label && (
+                                    {property.energy.energy_label && (
                                         <div className="flex items-center gap-2 mb-2">
                                             <span className="text-gray-600">Etiqueta:</span>
                                             <span className="font-bold text-lg">
-                                                {property.data.energy.energy_label}
+                                                {property.energy.energy_label}
                                             </span>
                                         </div>
                                     )}
-                                    {property.data.energy.co2_emissions && (
+                                    {property.energy.co2_emissions && (
                                         <div className="text-sm text-gray-600">
-                                            Emissions: {property.data.energy.co2_emissions} kg CO₂/m²/any
+                                            Emissions: {property.energy.co2_emissions} kg CO₂/m²/any
                                         </div>
                                     )}
                                 </div>
