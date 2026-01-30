@@ -92,17 +92,17 @@ export default function NewPropertyPage() {
 
     if (!session) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+            <div className="min-h-screen flex items-center justify-center bg-neutral-cream">
                 <div className="text-center">
-                    <h1 className="text-2xl font-bold text-gray-900 mb-4">
+                    <h1 className="text-2xl font-semibold text-text-primary mb-4">
                         Cal iniciar sessió
                     </h1>
-                    <p className="text-gray-600 mb-4">
+                    <p className="text-text-secondary mb-6">
                         Has d'estar autenticat per publicar un immoble
                     </p>
                     <button
                         onClick={() => router.push("/auth/signin")}
-                        className="bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition"
+                        className="bg-primary-dark text-white px-8 py-3 rounded-full font-semibold hover:bg-primary transition-all duration-300 shadow-soft"
                     >
                         Iniciar Sessió
                     </button>
@@ -112,15 +112,15 @@ export default function NewPropertyPage() {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-neutral-cream py-12">
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="bg-white rounded-xl shadow-md p-8">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-6">
+                <div className="bg-white rounded-2xl shadow-soft-lg p-10">
+                    <h1 className="text-4xl font-semibold text-text-primary mb-8 tracking-tight">
                         Publicar Nou Immoble
                     </h1>
 
                     {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl mb-6">
                             {error}
                         </div>
                     )}
@@ -128,12 +128,12 @@ export default function NewPropertyPage() {
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Informació Bàsica */}
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">
+                            <h2 className="text-2xl font-semibold text-text-primary mb-5 tracking-tight">
                                 Informació Bàsica
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Títol *
                                     </label>
                                     <input
@@ -143,13 +143,13 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, title: e.target.value })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark transition-all duration-200"
                                         placeholder="Ex: Pis modern al centre de Barcelona"
                                     />
                                 </div>
 
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Descripció *
                                     </label>
                                     <textarea
@@ -159,13 +159,13 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, description: e.target.value })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
                                         placeholder="Descriu l'immoble..."
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Tipus *
                                     </label>
                                     <select
@@ -174,7 +174,7 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, type: e.target.value })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
                                     >
                                         <option value="pis">Pis</option>
                                         <option value="casa">Casa</option>
@@ -184,7 +184,7 @@ export default function NewPropertyPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Preu (€) *
                                     </label>
                                     <input
@@ -196,13 +196,13 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, price: e.target.value })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
                                         placeholder="250000"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Habitacions *
                                     </label>
                                     <input
@@ -213,13 +213,13 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, rooms: e.target.value })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
                                         placeholder="3"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Metres Quadrats *
                                     </label>
                                     <input
@@ -231,7 +231,7 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, square_meters: e.target.value })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
                                         placeholder="85"
                                     />
                                 </div>
@@ -240,10 +240,10 @@ export default function NewPropertyPage() {
 
                         {/* Ubicació */}
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">Ubicació</h2>
+                            <h2 className="text-2xl font-semibold text-text-primary mb-5 tracking-tight">Ubicació</h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Municipi *
                                     </label>
                                     <input
@@ -253,13 +253,13 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, municipality: e.target.value })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
                                         placeholder="Barcelona"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Província *
                                     </label>
                                     <input
@@ -269,13 +269,13 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, province: e.target.value })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
                                         placeholder="Barcelona"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Comunitat Autònoma *
                                     </label>
                                     <input
@@ -288,7 +288,7 @@ export default function NewPropertyPage() {
                                                 autonomous_community: e.target.value,
                                             })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
                                         placeholder="Catalunya"
                                     />
                                 </div>
@@ -297,12 +297,12 @@ export default function NewPropertyPage() {
 
                         {/* Característiques */}
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">
+                            <h2 className="text-2xl font-semibold text-text-primary mb-5 tracking-tight">
                                 Característiques
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Plantes
                                     </label>
                                     <input
@@ -312,13 +312,13 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, floors: e.target.value })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
                                         placeholder="1"
                                     />
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Orientació
                                     </label>
                                     <select
@@ -326,7 +326,7 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, orientation: e.target.value })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
                                     >
                                         <option value="">Selecciona...</option>
                                         <option value="nord">Nord</option>
@@ -337,7 +337,7 @@ export default function NewPropertyPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Estat
                                     </label>
                                     <select
@@ -345,7 +345,7 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, condition: e.target.value })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
                                     >
                                         <option value="nou">Nou</option>
                                         <option value="quasi_nou">Quasi nou</option>
@@ -355,7 +355,7 @@ export default function NewPropertyPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label className="block text-sm font-medium text-text-primary mb-2">
                                         Etiqueta Energètica
                                     </label>
                                     <select
@@ -363,7 +363,7 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, energy_label: e.target.value })
                                         }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
                                     >
                                         <option value="">Selecciona...</option>
                                         <option value="A">A</option>
@@ -377,7 +377,7 @@ export default function NewPropertyPage() {
                                 </div>
 
                                 <div className="flex items-center gap-6">
-                                    <label className="flex items-center gap-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={formData.has_elevator}
@@ -387,14 +387,14 @@ export default function NewPropertyPage() {
                                                     has_elevator: e.target.checked,
                                                 })
                                             }
-                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                            className="w-4 h-4 text-primary-dark border-neutral-warm rounded focus:ring-primary-dark"
                                         />
-                                        <span className="text-sm font-medium text-gray-700">
+                                        <span className="text-sm font-medium text-text-primary">
                                             Ascensor
                                         </span>
                                     </label>
 
-                                    <label className="flex items-center gap-2">
+                                    <label className="flex items-center gap-2 cursor-pointer">
                                         <input
                                             type="checkbox"
                                             checked={formData.is_furnished}
@@ -404,9 +404,9 @@ export default function NewPropertyPage() {
                                                     is_furnished: e.target.checked,
                                                 })
                                             }
-                                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                            className="w-4 h-4 text-primary-dark border-neutral-warm rounded focus:ring-primary-dark"
                                         />
-                                        <span className="text-sm font-medium text-gray-700">
+                                        <span className="text-sm font-medium text-text-primary">
                                             Amoblat
                                         </span>
                                     </label>
@@ -416,7 +416,7 @@ export default function NewPropertyPage() {
 
                         {/* Imatges */}
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">Imatges</h2>
+                            <h2 className="text-2xl font-semibold text-text-primary mb-5 tracking-tight">Imatges</h2>
                             <ImageUploader
                                 accessToken={(session as any)?.accessToken || ""}
                                 images={images}
@@ -426,17 +426,17 @@ export default function NewPropertyPage() {
 
                         {/* Privacitat */}
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900 mb-4">Privacitat</h2>
-                            <label className="flex items-center gap-2">
+                            <h2 className="text-2xl font-semibold text-text-primary mb-5 tracking-tight">Privacitat</h2>
+                            <label className="flex items-center gap-2 cursor-pointer">
                                 <input
                                     type="checkbox"
                                     checked={formData.isPrivate}
                                     onChange={(e) =>
                                         setFormData({ ...formData, isPrivate: e.target.checked })
                                     }
-                                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    className="w-4 h-4 text-primary-dark border-neutral-warm rounded focus:ring-primary-dark"
                                 />
-                                <span className="text-sm font-medium text-gray-700">
+                                <span className="text-sm font-medium text-text-primary">
                                     Immoble privat (amb requisits d'accés)
                                 </span>
                             </label>
@@ -447,14 +447,14 @@ export default function NewPropertyPage() {
                             <button
                                 type="button"
                                 onClick={() => router.back()}
-                                className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg font-semibold hover:bg-gray-300 transition"
+                                className="flex-1 bg-neutral-warm text-text-primary py-3 rounded-xl font-semibold hover:bg-neutral-beige transition"
                             >
                                 Cancel·lar
                             </button>
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 bg-primary-dark text-white py-3 rounded-xl font-semibold hover:bg-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? "Publicant..." : "Publicar Immoble"}
                             </button>
