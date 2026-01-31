@@ -25,9 +25,10 @@ export const authOptions: NextAuthOptions = {
             },
             async authorize(credentials) {
                 // Mock authentication - NOMÉS PER POC
+                // Accepta qualsevol email/password per demo
                 if (credentials?.email && credentials?.password) {
                     return {
-                        id: "demo-" + Date.now(),
+                        id: "demo-user-id", // ID fix per consistència amb backend
                         name: "Demo User",
                         email: credentials.email,
                         image: "https://i.pravatar.cc/150?u=" + credentials.email,
@@ -42,10 +43,11 @@ export const authOptions: NextAuthOptions = {
             if (account) {
                 token.accessToken = account.access_token;
                 token.idToken = account.id_token;
-            }
-            // Inject demo token for credentials provider
-            if (user && user.email === 'demo@realstate.com') {
-                token.accessToken = 'demo-token';
+
+                // Inject demo token for demo provider
+                if (account.provider === 'demo') {
+                    token.accessToken = 'demo-token';
+                }
             }
             if (user) {
                 token.id = user.id;
@@ -62,7 +64,7 @@ export const authOptions: NextAuthOptions = {
         },
     },
     pages: {
-        signIn: "/auth/signin",
+        signIn: "/ca/auth/signin",
     },
     secret: process.env.NEXTAUTH_SECRET,
     session: {
