@@ -20,9 +20,9 @@ export default function NewPropertyPage() {
         rooms: "",
         square_meters: "",
         type: "",
-        municipality: "",
-        province: "",
-        autonomous_community: "",
+        latitude: "",
+        longitude: "",
+        address: "",
         floors: "",
         orientation: "",
         condition: "",
@@ -50,9 +50,9 @@ export default function NewPropertyPage() {
                     type: formData.type,
                 },
                 location: {
-                    municipality: formData.municipality,
-                    province: formData.province,
-                    autonomous_community: formData.autonomous_community,
+                    latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
+                    longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
+                    address: formData.address || undefined,
                 },
                 characteristics: {
                     floors: formData.floors ? parseInt(formData.floors) : undefined,
@@ -249,60 +249,59 @@ export default function NewPropertyPage() {
                             </div>
                         </div>
 
-                        {/* Ubicació */}
-                        <div>
-                            <h2 className="text-2xl font-semibold text-text-primary mb-5 tracking-tight">Ubicació</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Location */}
+                        <div className="bg-white rounded-lg p-6 shadow-sm">
+                            <h2 className="text-xl font-semibold text-text-primary mb-4">Ubicació</h2>
+                            <div className="space-y-4">
                                 <div>
-                                    <label className="block text-sm font-medium text-text-primary mb-2">
-                                        Municipi *
+                                    <label className="block text-sm font-medium text-text-secondary mb-2">
+                                        Adreça
                                     </label>
                                     <input
                                         type="text"
-                                        required
-                                        value={formData.municipality}
+                                        placeholder="Ex: Carrer de Balmes 123, Barcelona"
+                                        value={formData.address}
                                         onChange={(e) =>
-                                            setFormData({ ...formData, municipality: e.target.value })
+                                            setFormData({ ...formData, address: e.target.value })
                                         }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
-                                        placeholder="Barcelona"
+                                        className="w-full px-4 py-2 border border-neutral-sand rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-sage"
                                     />
                                 </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-text-primary mb-2">
-                                        Província *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.province}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, province: e.target.value })
-                                        }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
-                                        placeholder="Barcelona"
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-text-secondary mb-2">
+                                            Latitud
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            placeholder="41.3874"
+                                            value={formData.latitude}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, latitude: e.target.value })
+                                            }
+                                            className="w-full px-4 py-2 border border-neutral-sand rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-sage"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium text-text-secondary mb-2">
+                                            Longitud
+                                        </label>
+                                        <input
+                                            type="number"
+                                            step="any"
+                                            placeholder="2.1686"
+                                            value={formData.longitude}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, longitude: e.target.value })
+                                            }
+                                            className="w-full px-4 py-2 border border-neutral-sand rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-sage"
+                                        />
+                                    </div>
                                 </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-text-primary mb-2">
-                                        Comunitat Autònoma *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.autonomous_community}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                autonomous_community: e.target.value,
-                                            })
-                                        }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
-                                        placeholder="Catalunya"
-                                    />
-                                </div>
+                                <p className="text-sm text-text-tertiary">
+                                    💡 Consell: Pots obtenir les coordenades des de Google Maps fent clic dret sobre la ubicació
+                                </p>
                             </div>
                         </div>
 
