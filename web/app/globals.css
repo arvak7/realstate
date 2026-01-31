@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,23 +6,13 @@
 
 :root {
   /* Kindred-inspired color palette */
-  --color-primary-dark: #292D32;
-  --color-primary: #3A3F44;
+  --color-primary-dark: #1a1a1a;
+  --color-primary: #292D32;
   --color-neutral-cream: #FAF8F6;
-  --color-neutral-beige: #F5F1ED;
-  --color-neutral-warm: #E8E4E0;
-  --color-text-primary: #2C2C2C;
+  --color-neutral-warm: #f5f5f5;
+  --color-text-primary: #1a1a1a;
   --color-text-secondary: #6B6B6B;
-  --color-text-light: #9CA3AF;
-  --color-accent-terracotta: #C97D60;
-  --color-accent-olive: #8B9A7E;
-  --color-accent-sage: #A8B5A0;
-
-  /* Spacing */
-  --spacing-section: 5rem;
-
-  /* Transitions */
-  --transition-base: 300ms ease;
+  --color-amber: #D4A853;
 }
 
 * {
@@ -30,24 +20,65 @@
 }
 
 body {
-  background: var(--color-neutral-cream);
+  background: white;
   color: var(--color-text-primary);
-  font-family: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   font-weight: 400;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-weight: 600;
-  line-height: 1.2;
+/* Kindred-style serif headings */
+h1, h2 {
+  font-family: Georgia, Cambria, 'Times New Roman', serif;
+  font-weight: 400;
+  line-height: 1.1;
   letter-spacing: -0.02em;
+}
+
+h3, h4, h5, h6 {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+@layer components {
+  /* Kindred-style pill button - primary */
+  .btn-primary {
+    @apply bg-kindred-dark text-white font-medium py-3 px-8 rounded-pill
+           hover:bg-black transition-all duration-300 inline-flex items-center gap-2;
+  }
+
+  /* Kindred-style pill button - secondary */
+  .btn-secondary {
+    @apply bg-white text-kindred-dark font-medium py-3 px-8 rounded-pill
+           border border-kindred-dark/20 hover:border-kindred-dark/40
+           transition-all duration-300 inline-flex items-center gap-2;
+  }
+
+  /* Kindred-style pill button - outline */
+  .btn-outline {
+    @apply bg-transparent text-kindred-dark font-medium py-3 px-8 rounded-pill
+           border border-kindred-dark hover:bg-kindred-dark hover:text-white
+           transition-all duration-300 inline-flex items-center gap-2;
+  }
+
+  /* Location tag pills */
+  .location-pill {
+    @apply bg-neutral-warm text-kindred-dark font-medium py-2.5 px-5 rounded-pill
+           text-sm hover:bg-neutral-beige transition-colors duration-200 cursor-pointer;
+  }
+
+  /* Section spacing */
+  .section-padding {
+    @apply py-20 md:py-28 px-6;
+  }
+
+  /* Container */
+  .container-kindred {
+    @apply max-w-7xl mx-auto px-6 lg:px-8;
+  }
 }
 
 @layer utilities {

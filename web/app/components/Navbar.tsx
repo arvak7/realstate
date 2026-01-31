@@ -2,66 +2,141 @@
 
 import Link from "next/link";
 import { useSession, signOut, signIn } from "next-auth/react";
+import { useState } from "react";
 
 export default function Navbar() {
     const { data: session } = useSession();
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     return (
-        <nav className="bg-primary-dark shadow-soft">
+        <nav className="bg-white border-b border-gray-100">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
-                <div className="flex justify-between items-center h-20">
-                    {/* Logo */}
+                <div className="flex justify-between items-center h-16">
+                    {/* Logo - Kindred style bold text */}
                     <Link href="/" className="flex items-center">
-                        <span className="text-2xl font-semibold text-white tracking-tight">
-                            RealEstate
+                        <span className="text-2xl font-bold text-kindred-dark tracking-tight">
+                            Immobles
                         </span>
                     </Link>
 
-                    {/* Navigation Links */}
-                    <div className="flex items-center gap-8">
-                        <Link
-                            href="/properties"
-                            className="text-white/80 hover:text-white font-medium transition-colors duration-300"
-                        >
-                            Immobles
-                        </Link>
-
+                    {/* Desktop Navigation */}
+                    <div className="hidden md:flex items-center gap-4">
                         {session ? (
                             <>
                                 <Link
+                                    href="/properties"
+                                    className="text-kindred-gray hover:text-kindred-dark font-medium transition-colors duration-200 px-3 py-2"
+                                >
+                                    Explorar
+                                </Link>
+                                <Link
                                     href="/properties/new"
-                                    className="text-white/80 hover:text-white font-medium transition-colors duration-300"
+                                    className="text-kindred-gray hover:text-kindred-dark font-medium transition-colors duration-200 px-3 py-2"
                                 >
                                     Publicar
                                 </Link>
-                                <Link
-                                    href="/dashboard/properties"
-                                    className="text-white/80 hover:text-white font-medium transition-colors duration-300"
+                                <span className="text-sm text-kindred-gray px-3">
+                                    {session.user?.email}
+                                </span>
+                                <button
+                                    onClick={() => signOut()}
+                                    className="btn-secondary text-sm py-2 px-5"
                                 >
-                                    Les Meves Propietats
+                                    Tancar Sessió
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={() => signIn()}
+                                    className="btn-secondary text-sm py-2 px-5"
+                                >
+                                    Iniciar Sessió
+                                </button>
+                                <Link
+                                    href="/properties"
+                                    className="btn-primary text-sm py-2 px-5"
+                                >
+                                    Explorar Immobles
                                 </Link>
-                                <div className="flex items-center gap-4 ml-4">
-                                    <span className="text-sm text-white/60">
+                            </>
+                        )}
+
+                        {/* Hamburger menu button */}
+                        <button
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="p-2 hover:bg-neutral-warm rounded-lg transition-colors ml-2"
+                            aria-label="Open menu"
+                        >
+                            <svg className="w-6 h-6 text-kindred-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    {/* Mobile menu button */}
+                    <button
+                        onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                        className="md:hidden p-2 hover:bg-neutral-warm rounded-lg transition-colors"
+                        aria-label="Toggle menu"
+                    >
+                        <svg className="w-6 h-6 text-kindred-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            {mobileMenuOpen ? (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                            ) : (
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+                            )}
+                        </svg>
+                    </button>
+                </div>
+
+                {/* Mobile Menu */}
+                {mobileMenuOpen && (
+                    <div className="md:hidden py-4 border-t border-gray-100">
+                        <div className="flex flex-col gap-2">
+                            <Link
+                                href="/properties"
+                                className="text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
+                                onClick={() => setMobileMenuOpen(false)}
+                            >
+                                Explorar Immobles
+                            </Link>
+                            {session ? (
+                                <>
+                                    <Link
+                                        href="/properties/new"
+                                        className="text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        Publicar
+                                    </Link>
+                                    <div className="px-4 py-2 text-sm text-kindred-gray">
                                         {session.user?.email}
-                                    </span>
+                                    </div>
                                     <button
-                                        onClick={() => signOut()}
-                                        className="bg-white/10 text-white px-5 py-2 rounded-full hover:bg-white/20 transition-all duration-300 font-medium text-sm"
+                                        onClick={() => {
+                                            signOut();
+                                            setMobileMenuOpen(false);
+                                        }}
+                                        className="text-left text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
                                     >
                                         Tancar Sessió
                                     </button>
-                                </div>
-                            </>
-                        ) : (
-                            <button
-                                onClick={() => signIn()}
-                                className="bg-white text-primary-dark px-6 py-2.5 rounded-full font-semibold hover:bg-neutral-cream transition-all duration-300 shadow-soft"
-                            >
-                                Iniciar Sessió
-                            </button>
-                        )}
+                                </>
+                            ) : (
+                                <button
+                                    onClick={() => {
+                                        signIn();
+                                        setMobileMenuOpen(false);
+                                    }}
+                                    className="text-left text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
+                                >
+                                    Iniciar Sessió
+                                </button>
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
         </nav>
     );
