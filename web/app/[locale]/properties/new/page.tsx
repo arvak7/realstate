@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "@/i18n/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import ImageUploader, { UploadedImage } from "@/app/[locale]/components/ImageUploader";
+import { useCatalogs } from "@/app/hooks/useCatalogs";
 
 export default function NewPropertyPage() {
     const { data: session } = useSession();
@@ -13,6 +14,8 @@ export default function NewPropertyPage() {
     const [error, setError] = useState("");
     const t = useTranslations("newProperty");
     const tNav = useTranslations("nav");
+    const locale = useLocale();
+    const catalogs = useCatalogs();
 
     const [formData, setFormData] = useState({
         title: "",
@@ -20,13 +23,13 @@ export default function NewPropertyPage() {
         price: "",
         rooms: "",
         square_meters: "",
-        type: "pis",
-        municipality: "Barcelona",
-        province: "Barcelona",
-        autonomous_community: "Catalunya",
+        type: "",
+        municipality: "",
+        province: "",
+        autonomous_community: "",
         floors: "",
         orientation: "",
-        condition: "bon_estat",
+        condition: "",
         has_elevator: false,
         is_furnished: false,
         energy_label: "",
@@ -34,6 +37,16 @@ export default function NewPropertyPage() {
         isPrivate: false,
     });
     const [images, setImages] = useState<UploadedImage[]>([]);
+
+    // Helper function to get label based on locale
+    const getLabel = (item: any) => {
+        if (item.label) return item.label; // For energy labels
+        if (item.name) return item.name; // For provinces/municipalities
+        // For property types, conditions, orientations
+        if (locale === 'ca') return item.labelCa;
+        if (locale === 'es') return item.labelEs;
+        return item.labelEn || item.labelCa;
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -128,6 +141,12 @@ export default function NewPropertyPage() {
                         </div>
                     )}
 
+                    {catalogs.error && (
+                        <div className="bg-red-50 border border-red-200 text-red-700 px-5 py-4 rounded-xl mb-6">
+                            {catalogs.error}
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Informació Bàsica */}
                         <div>
@@ -177,12 +196,15 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, type: e.target.value })
                                         }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
+                                        disabled={catalogs.loading}
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
                                     >
-                                        <option value="pis">{t("basicInfo.typeOptions.pis")}</option>
-                                        <option value="casa">{t("basicInfo.typeOptions.casa")}</option>
-                                        <option value="xalet">{t("basicInfo.typeOptions.xalet")}</option>
-                                        <option value="estudi">{t("basicInfo.typeOptions.estudi")}</option>
+                                        <option value="">{t("basicInfo.typeOptions.select")}</option>
+                                        {catalogs.propertyTypes.map((type) => (
+                                            <option key={type.code} value={type.code}>
+                                                {getLabel(type)}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
 
@@ -329,13 +351,15 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, orientation: e.target.value })
                                         }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
+                                        disabled={catalogs.loading}
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
                                     >
                                         <option value="">{t("characteristics.orientationOptions.select")}</option>
-                                        <option value="nord">{t("characteristics.orientationOptions.north")}</option>
-                                        <option value="sud">{t("characteristics.orientationOptions.south")}</option>
-                                        <option value="est">{t("characteristics.orientationOptions.east")}</option>
-                                        <option value="oest">{t("characteristics.orientationOptions.west")}</option>
+                                        {catalogs.orientations.map((orientation) => (
+                                            <option key={orientation.code} value={orientation.code}>
+                                                {getLabel(orientation)}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
 
@@ -348,12 +372,15 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, condition: e.target.value })
                                         }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
+                                        disabled={catalogs.loading}
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
                                     >
-                                        <option value="nou">{t("characteristics.conditionOptions.new")}</option>
-                                        <option value="quasi_nou">{t("characteristics.conditionOptions.almostNew")}</option>
-                                        <option value="bon_estat">{t("characteristics.conditionOptions.good")}</option>
-                                        <option value="a_reformar">{t("characteristics.conditionOptions.toRenovate")}</option>
+                                        <option value="">{t("characteristics.conditionOptions.select")}</option>
+                                        {catalogs.conditions.map((condition) => (
+                                            <option key={condition.code} value={condition.code}>
+                                                {getLabel(condition)}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
 
@@ -366,16 +393,15 @@ export default function NewPropertyPage() {
                                         onChange={(e) =>
                                             setFormData({ ...formData, energy_label: e.target.value })
                                         }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
+                                        disabled={catalogs.loading}
+                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
                                     >
                                         <option value="">{t("characteristics.orientationOptions.select")}</option>
-                                        <option value="A">A</option>
-                                        <option value="B">B</option>
-                                        <option value="C">C</option>
-                                        <option value="D">D</option>
-                                        <option value="E">E</option>
-                                        <option value="F">F</option>
-                                        <option value="G">G</option>
+                                        {catalogs.energyLabels.map((label) => (
+                                            <option key={label.code} value={label.code}>
+                                                {label.label}
+                                            </option>
+                                        ))}
                                     </select>
                                 </div>
 

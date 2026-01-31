@@ -8,48 +8,48 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(uuid())
-  email             String   @unique
-  name              String?
-  passwordHash      String?  @map("password_hash")
-  authProvider      String   @map("auth_provider") // 'email', 'google', 'facebook'
-  providerId        String?  @map("provider_id")
-  identityVerified  Boolean  @default(false) @map("identity_verified")
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-  
-  properties                Property[]
-  contacts                  Contact[]
-  propertyViews             PropertyView[]
-  favorites                 Favorite[]
-  ratingsGiven              Rating[]                  @relation("RatingsGiven")
-  ratingsReceived           Rating[]                  @relation("RatingsReceived")
-  identityVerifications     IdentityVerification[]
-  propertyVerifications     PropertyVerification[]    @relation("PropertyVerificationUser")
-  reviewedVerifications     PropertyVerification[]    @relation("PropertyVerificationReviewer")
-  
+  id               String   @id @default(uuid())
+  email            String   @unique
+  name             String?
+  passwordHash     String?  @map("password_hash")
+  authProvider     String   @map("auth_provider") // 'email', 'google', 'facebook'
+  providerId       String?  @map("provider_id")
+  identityVerified Boolean  @default(false) @map("identity_verified")
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+
+  properties            Property[]
+  contacts              Contact[]
+  propertyViews         PropertyView[]
+  favorites             Favorite[]
+  ratingsGiven          Rating[]               @relation("RatingsGiven")
+  ratingsReceived       Rating[]               @relation("RatingsReceived")
+  identityVerifications IdentityVerification[]
+  propertyVerifications PropertyVerification[] @relation("PropertyVerificationUser")
+  reviewedVerifications PropertyVerification[] @relation("PropertyVerificationReviewer")
+
   @@unique([authProvider, providerId], name: "unique_provider_id")
   @@index([email])
   @@map("users")
 }
 
 model Property {
-  id                  String   @id @default(uuid())
-  ownerId             String   @map("owner_id")
-  elasticsearchId     String   @unique @map("elasticsearch_id")
-  status              String   @default("active") // 'active', 'paused', 'closed'
-  isPrivate           Boolean  @default(false) @map("is_private")
-  accessRequirements  Json?    @map("access_requirements")
-  createdAt           DateTime @default(now()) @map("created_at")
-  updatedAt           DateTime @updatedAt @map("updated_at")
-  
-  owner                    User                      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  contacts                 Contact[]
-  propertyViews            PropertyView[]
-  favorites                Favorite[]
-  ratings                  Rating[]
-  propertyVerifications    PropertyVerification[]
-  
+  id                 String   @id @default(uuid())
+  ownerId            String   @map("owner_id")
+  elasticsearchId    String   @unique @map("elasticsearch_id")
+  status             String   @default("active") // 'active', 'paused', 'closed'
+  isPrivate          Boolean  @default(false) @map("is_private")
+  accessRequirements Json?    @map("access_requirements")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  owner                 User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  contacts              Contact[]
+  propertyViews         PropertyView[]
+  favorites             Favorite[]
+  ratings               Rating[]
+  propertyVerifications PropertyVerification[]
+
   @@index([ownerId])
   @@index([status])
   @@index([elasticsearchId])
@@ -57,18 +57,18 @@ model Property {
 }
 
 model Rating {
-  id           String   @id @default(uuid())
-  fromUserId   String   @map("from_user_id")
-  toUserId     String   @map("to_user_id")
-  propertyId   String?  @map("property_id")
-  rating       Int      @db.SmallInt
-  comment      String?  @db.Text
-  createdAt    DateTime @default(now()) @map("created_at")
-  
-  fromUser     User      @relation("RatingsGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
-  toUser       User      @relation("RatingsReceived", fields: [toUserId], references: [id], onDelete: Cascade)
-  property     Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
-  
+  id         String   @id @default(uuid())
+  fromUserId String   @map("from_user_id")
+  toUserId   String   @map("to_user_id")
+  propertyId String?  @map("property_id")
+  rating     Int      @db.SmallInt
+  comment    String?  @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  fromUser User      @relation("RatingsGiven", fields: [fromUserId], references: [id], onDelete: Cascade)
+  toUser   User      @relation("RatingsReceived", fields: [toUserId], references: [id], onDelete: Cascade)
+  property Property? @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+
   @@unique([fromUserId, toUserId, propertyId])
   @@index([toUserId])
   @@index([propertyId])
@@ -76,37 +76,37 @@ model Rating {
 }
 
 model IdentityVerification {
-  id                    String    @id @default(uuid())
-  userId                String    @map("user_id")
-  stripeVerificationId  String?   @unique @map("stripe_verification_id")
-  status                String    @default("pending") // 'pending', 'verified', 'rejected'
-  documents             Json?
-  rejectionReason       String?   @map("rejection_reason") @db.Text
-  createdAt             DateTime  @default(now()) @map("created_at")
-  verifiedAt            DateTime? @map("verified_at")
-  
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+  id                   String    @id @default(uuid())
+  userId               String    @map("user_id")
+  stripeVerificationId String?   @unique @map("stripe_verification_id")
+  status               String    @default("pending") // 'pending', 'verified', 'rejected'
+  documents            Json?
+  rejectionReason      String?   @map("rejection_reason") @db.Text
+  createdAt            DateTime  @default(now()) @map("created_at")
+  verifiedAt           DateTime? @map("verified_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([status])
   @@map("identity_verifications")
 }
 
 model PropertyVerification {
-  id               String    @id @default(uuid())
-  propertyId       String    @map("property_id")
-  userId           String    @map("user_id")
-  status           String    @default("pending") // 'pending', 'verified', 'rejected'
-  documents        Json
-  reviewedBy       String?   @map("reviewed_by")
-  rejectionReason  String?   @map("rejection_reason") @db.Text
-  createdAt        DateTime  @default(now()) @map("created_at")
-  verifiedAt       DateTime? @map("verified_at")
-  
-  property         Property  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  user             User      @relation("PropertyVerificationUser", fields: [userId], references: [id], onDelete: Cascade)
-  reviewer         User?     @relation("PropertyVerificationReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
-  
+  id              String    @id @default(uuid())
+  propertyId      String    @map("property_id")
+  userId          String    @map("user_id")
+  status          String    @default("pending") // 'pending', 'verified', 'rejected'
+  documents       Json
+  reviewedBy      String?   @map("reviewed_by")
+  rejectionReason String?   @map("rejection_reason") @db.Text
+  createdAt       DateTime  @default(now()) @map("created_at")
+  verifiedAt      DateTime? @map("verified_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation("PropertyVerificationUser", fields: [userId], references: [id], onDelete: Cascade)
+  reviewer User?    @relation("PropertyVerificationReviewer", fields: [reviewedBy], references: [id], onDelete: SetNull)
+
   @@index([propertyId])
   @@index([status])
   @@map("property_verifications")
@@ -118,10 +118,10 @@ model Contact {
   userId     String   @map("user_id")
   message    String?
   createdAt  DateTime @default(now()) @map("created_at")
-  
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([propertyId])
   @@index([userId])
   @@index([createdAt(sort: Desc)])
@@ -134,10 +134,10 @@ model PropertyView {
   userId     String?  @map("user_id")
   ipAddress  String?  @map("ip_address") @db.VarChar(45)
   createdAt  DateTime @default(now()) @map("created_at")
-  
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
   @@index([propertyId])
   @@index([createdAt(sort: Desc)])
   @@map("property_views")
@@ -148,12 +148,97 @@ model Favorite {
   propertyId String   @map("property_id")
   userId     String   @map("user_id")
   createdAt  DateTime @default(now()) @map("created_at")
-  
-  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([propertyId, userId])
   @@index([userId])
   @@index([propertyId])
   @@map("favorites")
+}
+
+// Catalog Tables for Dynamic Dropdowns
+
+model PropertyType {
+  id           String   @id @default(uuid())
+  code         String   @unique @db.VarChar(50)
+  labelCa      String   @map("label_ca") @db.VarChar(100)
+  labelEs      String   @map("label_es") @db.VarChar(100)
+  labelEn      String   @map("label_en") @db.VarChar(100)
+  displayOrder Int      @map("display_order") @db.SmallInt
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([active, displayOrder])
+  @@map("property_types")
+}
+
+model PropertyCondition {
+  id           String   @id @default(uuid())
+  code         String   @unique @db.VarChar(50)
+  labelCa      String   @map("label_ca") @db.VarChar(100)
+  labelEs      String   @map("label_es") @db.VarChar(100)
+  labelEn      String   @map("label_en") @db.VarChar(100)
+  displayOrder Int      @map("display_order") @db.SmallInt
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([active, displayOrder])
+  @@map("property_conditions")
+}
+
+model Orientation {
+  id           String   @id @default(uuid())
+  code         String   @unique @db.VarChar(50)
+  labelCa      String   @map("label_ca") @db.VarChar(100)
+  labelEs      String   @map("label_es") @db.VarChar(100)
+  labelEn      String   @map("label_en") @db.VarChar(100)
+  displayOrder Int      @map("display_order") @db.SmallInt
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([active, displayOrder])
+  @@map("orientations")
+}
+
+model EnergyLabel {
+  id           String   @id @default(uuid())
+  code         String   @unique @db.VarChar(20)
+  label        String   @db.VarChar(50)
+  displayOrder Int      @map("display_order") @db.SmallInt
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([active, displayOrder])
+  @@map("energy_labels")
+}
+
+model Province {
+  id                  String   @id @default(uuid())
+  code                String   @unique @db.VarChar(50)
+  name                String   @db.VarChar(100)
+  autonomousCommunity String   @map("autonomous_community") @db.VarChar(100)
+  active              Boolean  @default(true)
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  municipalities Municipality[]
+
+  @@index([active])
+  @@map("provinces")
+}
+
+model Municipality {
+  id           String   @id @default(uuid())
+  code         String   @unique @db.VarChar(50)
+  name         String   @db.VarChar(100)
+  provinceCode String   @map("province_code") @db.VarChar(50)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  province Province @relation(fields: [provinceCode], references: [code], onDelete: Cascade)
+
+  @@index([provinceCode, active])
+  @@index([active])
+  @@map("municipalities")
 }

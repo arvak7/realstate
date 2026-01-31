@@ -124,10 +124,11 @@ export default function PropertiesPage() {
                             className="w-36 px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-kindred-dark/20 focus:border-kindred-dark outline-none transition-all"
                         >
                             <option value="">Habitacions</option>
-                            <option value="1">1 hab.</option>
-                            <option value="2">2 hab.</option>
-                            <option value="3">3 hab.</option>
-                            <option value="4">4+ hab.</option>
+                            {[1, 2, 3, 4, 5].map((num) => (
+                                <option key={num} value={num}>
+                                    {num}{num === 5 ? '+' : ''} hab.
+                                </option>
+                            ))}
                         </select>
                         <button
                             type="submit"

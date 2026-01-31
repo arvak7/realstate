@@ -4,6 +4,7 @@ import { PORT } from './config';
 import { initMinio, initElasticsearch } from './services/init';
 import propertyRoutes from './routes/properties';
 import userRoutes from './routes/users';
+import catalogRoutes from './routes/catalogs';
 
 const app = express();
 
@@ -14,6 +15,7 @@ app.use(express.json());
 app.get('/health', (req, res) => res.send('OK'));
 
 // API Routes
+app.use('/catalogs', catalogRoutes);
 app.use('/properties', propertyRoutes);
 app.use('/me', userRoutes);
 
