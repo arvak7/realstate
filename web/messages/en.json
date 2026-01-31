@@ -292,6 +292,50 @@
         "eivissa": "Ibiza",
         "menorca": "Menorca"
     },
+    "catalogs": {
+        "propertyTypes": {
+            "pis": "Apartment",
+            "casa": "House",
+            "xalet": "Villa",
+            "estudi": "Studio",
+            "atic": "Penthouse",
+            "duplex": "Duplex",
+            "triplex": "Triplex",
+            "loft": "Loft",
+            "local": "Commercial Space",
+            "oficina": "Office",
+            "garatge": "Garage",
+            "terreny": "Land"
+        },
+        "conditions": {
+            "nou": "New",
+            "quasi_nou": "Almost new",
+            "bon_estat": "Good condition",
+            "a_reformar": "To renovate",
+            "en_construccio": "Under construction"
+        },
+        "orientations": {
+            "nord": "North",
+            "sud": "South",
+            "est": "East",
+            "oest": "West",
+            "nord_est": "Northeast",
+            "nord_oest": "Northwest",
+            "sud_est": "Southeast",
+            "sud_oest": "Southwest"
+        },
+        "energyLabels": {
+            "A": "A",
+            "B": "B",
+            "C": "C",
+            "D": "D",
+            "E": "E",
+            "F": "F",
+            "G": "G",
+            "en_tramit": "Pending",
+            "exempt": "Exempt"
+        }
+    },
     "metadata": {
         "title": "Properties - Find your next home",
         "description": "Discover unique properties in Catalonia and the Balearic Islands. Buy, rent or sell with complete confidence."

@@ -8,7 +8,5 @@ router.get('/property-types', CatalogController.getPropertyTypes);
 router.get('/conditions', CatalogController.getPropertyConditions);
 router.get('/orientations', CatalogController.getOrientations);
 router.get('/energy-labels', CatalogController.getEnergyLabels);
-router.get('/provinces', CatalogController.getProvinces);
-router.get('/municipalities', CatalogController.getMunicipalities);
 
 export default router;

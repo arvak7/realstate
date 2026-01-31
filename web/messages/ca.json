@@ -292,6 +292,50 @@
         "eivissa": "Eivissa",
         "menorca": "Menorca"
     },
+    "catalogs": {
+        "propertyTypes": {
+            "pis": "Pis",
+            "casa": "Casa",
+            "xalet": "Xalet",
+            "estudi": "Estudi",
+            "atic": "Àtic",
+            "duplex": "Dúplex",
+            "triplex": "Tríplex",
+            "loft": "Loft",
+            "local": "Local",
+            "oficina": "Oficina",
+            "garatge": "Garatge",
+            "terreny": "Terreny"
+        },
+        "conditions": {
+            "nou": "Nou",
+            "quasi_nou": "Quasi nou",
+            "bon_estat": "Bon estat",
+            "a_reformar": "A reformar",
+            "en_construccio": "En construcció"
+        },
+        "orientations": {
+            "nord": "Nord",
+            "sud": "Sud",
+            "est": "Est",
+            "oest": "Oest",
+            "nord_est": "Nord-est",
+            "nord_oest": "Nord-oest",
+            "sud_est": "Sud-est",
+            "sud_oest": "Sud-oest"
+        },
+        "energyLabels": {
+            "A": "A",
+            "B": "B",
+            "C": "C",
+            "D": "D",
+            "E": "E",
+            "F": "F",
+            "G": "G",
+            "en_tramit": "En tràmit",
+            "exempt": "Exempt"
+        }
+    },
     "metadata": {
         "title": "Immobles - Troba el teu proper llar",
         "description": "Descobreix propietats úniques a Catalunya i les Illes Balears. Compra, lloga o ven amb total confiança."

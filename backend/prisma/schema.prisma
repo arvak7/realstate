@@ -163,9 +163,6 @@ model Favorite {
 model PropertyType {
   id           String   @id @default(uuid())
   code         String   @unique @db.VarChar(50)
-  labelCa      String   @map("label_ca") @db.VarChar(100)
-  labelEs      String   @map("label_es") @db.VarChar(100)
-  labelEn      String   @map("label_en") @db.VarChar(100)
   displayOrder Int      @map("display_order") @db.SmallInt
   active       Boolean  @default(true)
   createdAt    DateTime @default(now()) @map("created_at")
@@ -177,9 +174,6 @@ model PropertyType {
 model PropertyCondition {
   id           String   @id @default(uuid())
   code         String   @unique @db.VarChar(50)
-  labelCa      String   @map("label_ca") @db.VarChar(100)
-  labelEs      String   @map("label_es") @db.VarChar(100)
-  labelEn      String   @map("label_en") @db.VarChar(100)
   displayOrder Int      @map("display_order") @db.SmallInt
   active       Boolean  @default(true)
   createdAt    DateTime @default(now()) @map("created_at")
@@ -191,9 +185,6 @@ model PropertyCondition {
 model Orientation {
   id           String   @id @default(uuid())
   code         String   @unique @db.VarChar(50)
-  labelCa      String   @map("label_ca") @db.VarChar(100)
-  labelEs      String   @map("label_es") @db.VarChar(100)
-  labelEn      String   @map("label_en") @db.VarChar(100)
   displayOrder Int      @map("display_order") @db.SmallInt
   active       Boolean  @default(true)
   createdAt    DateTime @default(now()) @map("created_at")
@@ -205,7 +196,6 @@ model Orientation {
 model EnergyLabel {
   id           String   @id @default(uuid())
   code         String   @unique @db.VarChar(20)
-  label        String   @db.VarChar(50)
   displayOrder Int      @map("display_order") @db.SmallInt
   active       Boolean  @default(true)
   createdAt    DateTime @default(now()) @map("created_at")
@@ -214,31 +204,3 @@ model EnergyLabel {
   @@map("energy_labels")
 }
 
-model Province {
-  id                  String   @id @default(uuid())
-  code                String   @unique @db.VarChar(50)
-  name                String   @db.VarChar(100)
-  autonomousCommunity String   @map("autonomous_community") @db.VarChar(100)
-  active              Boolean  @default(true)
-  createdAt           DateTime @default(now()) @map("created_at")
-
-  municipalities Municipality[]
-
-  @@index([active])
-  @@map("provinces")
-}
-
-model Municipality {
-  id           String   @id @default(uuid())
-  code         String   @unique @db.VarChar(50)
-  name         String   @db.VarChar(100)
-  provinceCode String   @map("province_code") @db.VarChar(50)
-  active       Boolean  @default(true)
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  province Province @relation(fields: [provinceCode], references: [code], onDelete: Cascade)
-
-  @@index([provinceCode, active])
-  @@index([active])
-  @@map("municipalities")
-}

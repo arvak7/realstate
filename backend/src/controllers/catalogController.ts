@@ -14,9 +14,7 @@ export const getPropertyTypes = async (req: Request, res: Response) => {
             orderBy: { displayOrder: 'asc' },
             select: {
                 code: true,
-                labelCa: true,
-                labelEs: true,
-                labelEn: true,
+                displayOrder: true,
             },
         });
 
@@ -38,9 +36,7 @@ export const getPropertyConditions = async (req: Request, res: Response) => {
             orderBy: { displayOrder: 'asc' },
             select: {
                 code: true,
-                labelCa: true,
-                labelEs: true,
-                labelEn: true,
+                displayOrder: true,
             },
         });
 
@@ -62,9 +58,7 @@ export const getOrientations = async (req: Request, res: Response) => {
             orderBy: { displayOrder: 'asc' },
             select: {
                 code: true,
-                labelCa: true,
-                labelEs: true,
-                labelEn: true,
+                displayOrder: true,
             },
         });
 
@@ -86,7 +80,7 @@ export const getEnergyLabels = async (req: Request, res: Response) => {
             orderBy: { displayOrder: 'asc' },
             select: {
                 code: true,
-                label: true,
+                displayOrder: true,
             },
         });
 
@@ -97,55 +91,3 @@ export const getEnergyLabels = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * Get all provinces
- * GET /api/catalogs/provinces
- */
-export const getProvinces = async (req: Request, res: Response) => {
-    try {
-        const data = await prisma.province.findMany({
-            where: { active: true },
-            orderBy: { name: 'asc' },
-            select: {
-                code: true,
-                name: true,
-                autonomousCommunity: true,
-            },
-        });
-
-        res.json({ data, count: data.length });
-    } catch (error) {
-        console.error('Error fetching provinces:', error);
-        res.status(500).json({ error: 'Failed to fetch provinces' });
-    }
-};
-
-/**
- * Get municipalities, optionally filtered by province
- * GET /api/catalogs/municipalities?province=<code>
- */
-export const getMunicipalities = async (req: Request, res: Response) => {
-    try {
-        const { province } = req.query;
-
-        const where: any = { active: true };
-        if (province && typeof province === 'string') {
-            where.provinceCode = province;
-        }
-
-        const data = await prisma.municipality.findMany({
-            where,
-            orderBy: { name: 'asc' },
-            select: {
-                code: true,
-                name: true,
-                provinceCode: true,
-            },
-        });
-
-        res.json({ data, count: data.length });
-    } catch (error) {
-        console.error('Error fetching municipalities:', error);
-        res.status(500).json({ error: 'Failed to fetch municipalities' });
-    }
-};

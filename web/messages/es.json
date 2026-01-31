@@ -292,6 +292,50 @@
         "eivissa": "Ibiza",
         "menorca": "Menorca"
     },
+    "catalogs": {
+        "propertyTypes": {
+            "pis": "Piso",
+            "casa": "Casa",
+            "xalet": "Chalet",
+            "estudi": "Estudio",
+            "atic": "Ático",
+            "duplex": "Dúplex",
+            "triplex": "Tríplex",
+            "loft": "Loft",
+            "local": "Local",
+            "oficina": "Oficina",
+            "garatge": "Garaje",
+            "terreny": "Terreno"
+        },
+        "conditions": {
+            "nou": "Nuevo",
+            "quasi_nou": "Casi nuevo",
+            "bon_estat": "Buen estado",
+            "a_reformar": "A reformar",
+            "en_construccio": "En construcción"
+        },
+        "orientations": {
+            "nord": "Norte",
+            "sud": "Sur",
+            "est": "Este",
+            "oest": "Oeste",
+            "nord_est": "Noreste",
+            "nord_oest": "Noroeste",
+            "sud_est": "Sureste",
+            "sud_oest": "Suroeste"
+        },
+        "energyLabels": {
+            "A": "A",
+            "B": "B",
+            "C": "C",
+            "D": "D",
+            "E": "E",
+            "F": "F",
+            "G": "G",
+            "en_tramit": "En trámite",
+            "exempt": "Exento"
+        }
+    },
     "metadata": {
         "title": "Inmuebles - Encuentra tu próximo hogar",
         "description": "Descubre propiedades únicas en Cataluña y las Islas Baleares. Compra, alquila o vende con total confianza."
