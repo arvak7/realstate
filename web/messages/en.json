@@ -1,0 +1,299 @@
+{
+    "common": {
+        "brand": "Properties",
+        "loading": "Loading...",
+        "error": "Error",
+        "yes": "Yes",
+        "no": "No",
+        "cancel": "Cancel",
+        "save": "Save",
+        "delete": "Delete",
+        "edit": "Edit",
+        "search": "Search",
+        "noResults": "No results found",
+        "rooms": "rooms",
+        "squareMeters": "m²"
+    },
+    "nav": {
+        "explore": "Explore",
+        "publish": "Publish",
+        "signIn": "Sign In",
+        "signOut": "Sign Out",
+        "exploreProperties": "Explore Properties",
+        "openMenu": "Open menu",
+        "toggleMenu": "Toggle menu"
+    },
+    "home": {
+        "hero": {
+            "title": "Find your",
+            "titleLine2": "next home",
+            "subtitle": "Discover unique properties in Catalonia and the Balearic Islands. Buy, rent or sell with complete confidence.",
+            "cta": "Explore Properties",
+            "welcome": "Owners and tenants welcome"
+        },
+        "locations": {
+            "title": "Properties in the best locations",
+            "viewAll": "View all",
+            "more": "+ More"
+        },
+        "featured": {
+            "title": "Featured properties",
+            "subtitle": "Discover the best options selected for you",
+            "viewAll": "View all"
+        },
+        "cta": {
+            "title": "Want to list your property?",
+            "subtitle": "Reach thousands of potential buyers and tenants. List your property in minutes and start receiving inquiries.",
+            "button": "List Property"
+        },
+        "trust": {
+            "title": "Real people,",
+            "titleLine2": "real homes",
+            "point1": "All owners are verified and properties reviewed",
+            "point2": "Contact owners directly without intermediaries",
+            "point3": "Explore real properties, not generic ads",
+            "guarantee": "Satisfaction guarantee included in every transaction"
+        },
+        "banner": {
+            "title": "Now available in Catalonia and the Balearic Islands.",
+            "cta": "Explore Properties"
+        },
+        "images": {
+            "modernHouse": "Modern house with garden",
+            "elegantInterior": "Elegant interior",
+            "brightLiving": "Bright living room",
+            "modernKitchen": "Modern kitchen",
+            "cozyHome": "Cozy home interior"
+        }
+    },
+    "howItWorks": {
+        "title": "How it works",
+        "step1": {
+            "title": "Explore and discover",
+            "description": "Browse our catalog of verified properties. Filter by location, price, type and features to find exactly what you're looking for."
+        },
+        "step2": {
+            "title": "Contact the owner",
+            "description": "Once you find a property you're interested in, contact the owner directly. Get your questions answered and schedule a visit."
+        },
+        "step3": {
+            "title": "Close the deal with confidence",
+            "description": "With our team's support, complete the transaction securely. Verified documentation and satisfaction guarantee."
+        },
+        "moreInfo": "More information"
+    },
+    "faq": {
+        "title": "Questions?",
+        "titleLine2": "We're here to help",
+        "moreQuestions": "More questions and answers",
+        "questions": {
+            "q1": {
+                "question": "How can I list my property?",
+                "answer": "Sign up on the platform, verify your account and then you can list your property in just a few minutes. Add photos, description and price. Our team will review the listing to ensure quality."
+            },
+            "q2": {
+                "question": "What are the platform costs?",
+                "answer": "Exploring properties is completely free. For owners, we offer different plans according to their needs. The basic plan is free and premium plans offer more visibility and features."
+            },
+            "q3": {
+                "question": "How is owner identity verified?",
+                "answer": "All owners must verify their identity through a secure process that includes document verification and phone number verification. This ensures the safety of all users."
+            },
+            "q4": {
+                "question": "Can I rent and sell at the same time?",
+                "answer": "Yes, you can indicate if your property is available for rent, sale or both options. This way you reach a wider interested audience."
+            },
+            "q5": {
+                "question": "How does contacting owners work?",
+                "answer": "Once you find an interesting property, you can send a message directly to the owner through the platform. You'll receive notifications when they respond."
+            }
+        }
+    },
+    "footer": {
+        "tagline": "The trusted platform to find your next home.",
+        "properties": {
+            "title": "Properties",
+            "explore": "Explore",
+            "publish": "Publish",
+            "rent": "Rent",
+            "sale": "Sale"
+        },
+        "company": {
+            "title": "Company",
+            "about": "About Us",
+            "contact": "Contact",
+            "faq": "FAQ"
+        },
+        "legal": {
+            "title": "Legal",
+            "privacy": "Privacy",
+            "terms": "Terms and Conditions",
+            "cookies": "Cookie Policy"
+        },
+        "copyright": "All rights reserved."
+    },
+    "properties": {
+        "title": "Available properties",
+        "subtitle": "Find the perfect property for you",
+        "publishButton": "List Property",
+        "searchPlaceholder": "Search by location or keywords...",
+        "minPrice": "Min price",
+        "maxPrice": "Max price",
+        "rooms": "Bedrooms",
+        "roomsOption": "{count} bed.",
+        "roomsOptionPlus": "4+ bed.",
+        "searchButton": "Search",
+        "noResults": "No properties found",
+        "noResultsHint": "Try different search criteria",
+        "clearFilters": "Clear filters",
+        "resultsCount": "{count} {count, plural, one {property found} other {properties found}}",
+        "noTitle": "No title",
+        "noProperties": "No properties available at this time.",
+        "publishFirst": "Publish the first property",
+        "loginToSee": "Sign in to see details"
+    },
+    "propertyDetail": {
+        "notFound": "Property not found",
+        "notFoundHint": "The property you're looking for doesn't exist or has been removed.",
+        "backToList": "Back to listings",
+        "description": "Description",
+        "characteristics": "Characteristics",
+        "floors": "Floors",
+        "orientation": "Orientation",
+        "condition": "Condition",
+        "elevator": "Elevator",
+        "furnished": "Furnished",
+        "tags": "Tags",
+        "contact": "Contact",
+        "owner": "Owner",
+        "identityVerified": "Identity verified",
+        "contactButton": "Contact",
+        "loginToContact": "Sign in to contact the owner",
+        "energyEfficiency": "Energy Efficiency",
+        "energyLabel": "Label:",
+        "emissions": "Emissions: {value} kg CO₂/m²/year",
+        "imageAlt": "Image {number}",
+        "contactInDevelopment": "Contact feature under development",
+        "bedroomsCount": "{count} bedrooms"
+    },
+    "newProperty": {
+        "title": "List New Property",
+        "loginRequired": "Login required",
+        "loginRequiredHint": "You must be authenticated to list a property",
+        "errorCreate": "Error creating property. Please try again.",
+        "errorConnection": "Connection error. Please verify the backend is running.",
+        "basicInfo": {
+            "title": "Basic Information",
+            "propertyTitle": "Title",
+            "propertyTitlePlaceholder": "Ex: Modern apartment in central Barcelona",
+            "description": "Description",
+            "descriptionPlaceholder": "Describe the property...",
+            "type": "Type",
+            "typeOptions": {
+                "pis": "Apartment",
+                "casa": "House",
+                "xalet": "Villa",
+                "estudi": "Studio"
+            },
+            "price": "Price (€)",
+            "rooms": "Bedrooms",
+            "squareMeters": "Square Meters"
+        },
+        "location": {
+            "title": "Location",
+            "municipality": "Municipality",
+            "province": "Province",
+            "autonomousCommunity": "Autonomous Community"
+        },
+        "characteristics": {
+            "title": "Characteristics",
+            "floors": "Floors",
+            "orientation": "Orientation",
+            "orientationOptions": {
+                "select": "Select...",
+                "north": "North",
+                "south": "South",
+                "east": "East",
+                "west": "West"
+            },
+            "condition": "Condition",
+            "conditionOptions": {
+                "new": "New",
+                "almostNew": "Almost new",
+                "good": "Good condition",
+                "toRenovate": "To renovate"
+            },
+            "energyLabel": "Energy Label",
+            "elevator": "Elevator",
+            "furnished": "Furnished"
+        },
+        "images": {
+            "title": "Images"
+        },
+        "privacy": {
+            "title": "Privacy",
+            "privateProperty": "Private property (with access requirements)"
+        },
+        "submit": {
+            "cancel": "Cancel",
+            "publishing": "Publishing...",
+            "publish": "Publish Property"
+        }
+    },
+    "imageUploader": {
+        "invalidFormat": "Invalid format: {filename}. Allowed formats: JPEG, PNG, WebP",
+        "fileTooLarge": "File too large: {filename}. Maximum {maxSize}MB",
+        "maxImagesReached": "You've reached the maximum of {max} images",
+        "errorGettingUrl": "Error getting upload URL",
+        "errorUploading": "Error uploading image",
+        "networkError": "Network error",
+        "unknownError": "Unknown error",
+        "selectFiles": "Select files",
+        "dragHere": "or drag them here",
+        "fileTypes": "JPEG, PNG or WebP. Maximum {maxSize}MB per image. Up to {maxImages} images.",
+        "uploading": "Uploading...",
+        "errors": "Errors",
+        "uploadedImages": "Uploaded images ({current}/{max})",
+        "mainImage": "Main",
+        "delete": "Delete",
+        "setAsMain": "Set as main",
+        "imageAlt": "Image {number}"
+    },
+    "auth": {
+        "welcome": "Welcome",
+        "loginSubtitle": "Sign in to access your account",
+        "loginWithZitadel": "Sign In with Zitadel",
+        "or": "or",
+        "email": "Email",
+        "password": "Password",
+        "invalidCredentials": "Invalid credentials",
+        "loginError": "Login error",
+        "loggingIn": "Signing in...",
+        "demoLogin": "Demo Login",
+        "demoMode": "Demo Mode:",
+        "demoModeHint": "Any email and password combination works to try the platform.",
+        "noAccount": "Don't have an account?",
+        "register": "Sign up",
+        "sideTitle": "Find your next home",
+        "sideSubtitle": "Discover unique properties in Catalonia and the Balearic Islands with complete confidence.",
+        "homeInterior": "Home interior"
+    },
+    "locations": {
+        "barcelona": "Barcelona",
+        "madrid": "Madrid",
+        "valencia": "Valencia",
+        "girona": "Girona",
+        "tarragona": "Tarragona",
+        "lleida": "Lleida",
+        "costaBrava": "Costa Brava",
+        "costaDaurada": "Costa Daurada",
+        "pirineus": "Pyrenees",
+        "mallorca": "Mallorca",
+        "eivissa": "Ibiza",
+        "menorca": "Menorca"
+    },
+    "metadata": {
+        "title": "Properties - Find your next home",
+        "description": "Discover unique properties in Catalonia and the Balearic Islands. Buy, rent or sell with complete confidence."
+    }
+}

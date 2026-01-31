@@ -1,0 +1,299 @@
+{
+    "common": {
+        "brand": "Immobles",
+        "loading": "Carregant...",
+        "error": "Error",
+        "yes": "Sí",
+        "no": "No",
+        "cancel": "Cancel·lar",
+        "save": "Desar",
+        "delete": "Eliminar",
+        "edit": "Editar",
+        "search": "Cercar",
+        "noResults": "No s'han trobat resultats",
+        "rooms": "hab.",
+        "squareMeters": "m²"
+    },
+    "nav": {
+        "explore": "Explorar",
+        "publish": "Publicar",
+        "signIn": "Iniciar Sessió",
+        "signOut": "Tancar Sessió",
+        "exploreProperties": "Explorar Immobles",
+        "openMenu": "Obrir menú",
+        "toggleMenu": "Commutar menú"
+    },
+    "home": {
+        "hero": {
+            "title": "Troba el teu",
+            "titleLine2": "proper llar",
+            "subtitle": "Descobreix propietats úniques a Catalunya i les Illes Balears. Compra, lloga o ven amb total confiança.",
+            "cta": "Explorar Immobles",
+            "welcome": "Propietaris i llogaters benvinguts"
+        },
+        "locations": {
+            "title": "Immobles a les millors ubicacions",
+            "viewAll": "Veure tots",
+            "more": "+ Més"
+        },
+        "featured": {
+            "title": "Propietats destacades",
+            "subtitle": "Descobreix les millors opcions seleccionades per a tu",
+            "viewAll": "Veure totes"
+        },
+        "cta": {
+            "title": "Vols publicar el teu immoble?",
+            "subtitle": "Arriba a milers de compradors i llogaters potencials. Publica el teu immoble en minuts i comença a rebre consultes.",
+            "button": "Publicar Immoble"
+        },
+        "trust": {
+            "title": "Persones reals,",
+            "titleLine2": "llars reals",
+            "point1": "Tots els propietaris són verificats i les propietats revisades",
+            "point2": "Contacta directament amb els propietaris sense intermediaris",
+            "point3": "Explora immobles reals, no anuncis genèrics",
+            "guarantee": "Garantia de satisfacció inclosa en cada transacció"
+        },
+        "banner": {
+            "title": "Ara disponible a Catalunya i les Illes Balears.",
+            "cta": "Explorar Immobles"
+        },
+        "images": {
+            "modernHouse": "Casa moderna amb jardí",
+            "elegantInterior": "Interior elegant",
+            "brightLiving": "Sala d'estar lluminosa",
+            "modernKitchen": "Cuina moderna",
+            "cozyHome": "Interior d'una llar acollidora"
+        }
+    },
+    "howItWorks": {
+        "title": "Com funciona",
+        "step1": {
+            "title": "Explora i descobreix",
+            "description": "Navega pel nostre catàleg de propietats verificades. Filtra per ubicació, preu, tipus i característiques per trobar exactament el que busques."
+        },
+        "step2": {
+            "title": "Contacta amb el propietari",
+            "description": "Un cop trobis una propietat que t'interessi, contacta directament amb el propietari. Respon les teves preguntes i agenda una visita."
+        },
+        "step3": {
+            "title": "Tanca l'acord amb confiança",
+            "description": "Amb el suport del nostre equip, completa la transacció de forma segura. Documentació verificada i garantia de satisfacció."
+        },
+        "moreInfo": "Més informació"
+    },
+    "faq": {
+        "title": "Preguntes?",
+        "titleLine2": "Estem aquí per ajudar",
+        "moreQuestions": "Més preguntes i respostes",
+        "questions": {
+            "q1": {
+                "question": "Com puc publicar el meu immoble?",
+                "answer": "Registra't a la plataforma, verifica el teu compte i després podràs publicar el teu immoble en pocs minuts. Afegeix fotos, descripció i preu. El nostre equip revisarà la publicació per garantir la qualitat."
+            },
+            "q2": {
+                "question": "Quins costos té la plataforma?",
+                "answer": "Explorar immobles és completament gratuït. Per als propietaris, oferim diferents plans segons les seves necessitats. El pla bàsic és gratuït i els plans premium ofereixen més visibilitat i funcionalitats."
+            },
+            "q3": {
+                "question": "Com es verifica la identitat dels propietaris?",
+                "answer": "Tots els propietaris han de verificar la seva identitat mitjançant un procés segur que inclou verificació de documents i número de telèfon. Això garanteix la seguretat de tots els usuaris."
+            },
+            "q4": {
+                "question": "Puc llogar i vendre alhora?",
+                "answer": "Sí, pots indicar si el teu immoble està disponible per lloguer, venda o ambdues opcions. Així arribes a més públic interessat."
+            },
+            "q5": {
+                "question": "Com funciona el contacte amb els propietaris?",
+                "answer": "Un cop trobis un immoble interessant, pots enviar un missatge directament al propietari a través de la plataforma. Rebràs notificacions quan et respongui."
+            }
+        }
+    },
+    "footer": {
+        "tagline": "La plataforma de confiança per trobar el teu proper llar.",
+        "properties": {
+            "title": "Propietats",
+            "explore": "Explorar",
+            "publish": "Publicar",
+            "rent": "Lloguer",
+            "sale": "Venda"
+        },
+        "company": {
+            "title": "Empresa",
+            "about": "Sobre Nosaltres",
+            "contact": "Contacte",
+            "faq": "Preguntes Freqüents"
+        },
+        "legal": {
+            "title": "Legal",
+            "privacy": "Privacitat",
+            "terms": "Termes i Condicions",
+            "cookies": "Política de Cookies"
+        },
+        "copyright": "Tots els drets reservats."
+    },
+    "properties": {
+        "title": "Immobles disponibles",
+        "subtitle": "Troba la propietat perfecta per a tu",
+        "publishButton": "Publicar Immoble",
+        "searchPlaceholder": "Cerca per ubicació o paraules clau...",
+        "minPrice": "Preu mínim",
+        "maxPrice": "Preu màxim",
+        "rooms": "Habitacions",
+        "roomsOption": "{count} hab.",
+        "roomsOptionPlus": "4+ hab.",
+        "searchButton": "Cercar",
+        "noResults": "No s'han trobat immobles",
+        "noResultsHint": "Prova amb uns altres criteris de cerca",
+        "clearFilters": "Netejar filtres",
+        "resultsCount": "{count} {count, plural, one {immoble trobat} other {immobles trobats}}",
+        "noTitle": "Sense títol",
+        "noProperties": "No hi ha propietats disponibles en aquest moment.",
+        "publishFirst": "Publica la primera propietat",
+        "loginToSee": "Inicia sessió per veure detalls"
+    },
+    "propertyDetail": {
+        "notFound": "Immoble no trobat",
+        "notFoundHint": "L'immoble que busques no existeix o ha estat eliminat.",
+        "backToList": "Tornar al llistat",
+        "description": "Descripció",
+        "characteristics": "Característiques",
+        "floors": "Plantes",
+        "orientation": "Orientació",
+        "condition": "Estat",
+        "elevator": "Ascensor",
+        "furnished": "Amoblat",
+        "tags": "Etiquetes",
+        "contact": "Contacta",
+        "owner": "Propietari",
+        "identityVerified": "Identitat verificada",
+        "contactButton": "Contactar",
+        "loginToContact": "Inicia sessió per contactar amb el propietari",
+        "energyEfficiency": "Eficiència Energètica",
+        "energyLabel": "Etiqueta:",
+        "emissions": "Emissions: {value} kg CO₂/m²/any",
+        "imageAlt": "Imatge {number}",
+        "contactInDevelopment": "Funcionalitat de contacte en desenvolupament",
+        "bedroomsCount": "{count} habitacions"
+    },
+    "newProperty": {
+        "title": "Publicar Nou Immoble",
+        "loginRequired": "Cal iniciar sessió",
+        "loginRequiredHint": "Has d'estar autenticat per publicar un immoble",
+        "errorCreate": "Error al crear l'immoble. Si us plau, torna-ho a intentar.",
+        "errorConnection": "Error de connexió. Si us plau, verifica que el backend està en funcionament.",
+        "basicInfo": {
+            "title": "Informació Bàsica",
+            "propertyTitle": "Títol",
+            "propertyTitlePlaceholder": "Ex: Pis modern al centre de Barcelona",
+            "description": "Descripció",
+            "descriptionPlaceholder": "Descriu l'immoble...",
+            "type": "Tipus",
+            "typeOptions": {
+                "pis": "Pis",
+                "casa": "Casa",
+                "xalet": "Xalet",
+                "estudi": "Estudi"
+            },
+            "price": "Preu (€)",
+            "rooms": "Habitacions",
+            "squareMeters": "Metres Quadrats"
+        },
+        "location": {
+            "title": "Ubicació",
+            "municipality": "Municipi",
+            "province": "Província",
+            "autonomousCommunity": "Comunitat Autònoma"
+        },
+        "characteristics": {
+            "title": "Característiques",
+            "floors": "Plantes",
+            "orientation": "Orientació",
+            "orientationOptions": {
+                "select": "Selecciona...",
+                "north": "Nord",
+                "south": "Sud",
+                "east": "Est",
+                "west": "Oest"
+            },
+            "condition": "Estat",
+            "conditionOptions": {
+                "new": "Nou",
+                "almostNew": "Quasi nou",
+                "good": "Bon estat",
+                "toRenovate": "A reformar"
+            },
+            "energyLabel": "Etiqueta Energètica",
+            "elevator": "Ascensor",
+            "furnished": "Amoblat"
+        },
+        "images": {
+            "title": "Imatges"
+        },
+        "privacy": {
+            "title": "Privacitat",
+            "privateProperty": "Immoble privat (amb requisits d'accés)"
+        },
+        "submit": {
+            "cancel": "Cancel·lar",
+            "publishing": "Publicant...",
+            "publish": "Publicar Immoble"
+        }
+    },
+    "imageUploader": {
+        "invalidFormat": "Format no vàlid: {filename}. Formats permesos: JPEG, PNG, WebP",
+        "fileTooLarge": "Fitxer massa gran: {filename}. Màxim {maxSize}MB",
+        "maxImagesReached": "Ja has arribat al màxim de {max} imatges",
+        "errorGettingUrl": "Error obtenint URL de pujada",
+        "errorUploading": "Error pujant imatge",
+        "networkError": "Error de xarxa",
+        "unknownError": "Error desconegut",
+        "selectFiles": "Selecciona fitxers",
+        "dragHere": "o arrossega'ls aquí",
+        "fileTypes": "JPEG, PNG o WebP. Màxim {maxSize}MB per imatge. Fins a {maxImages} imatges.",
+        "uploading": "Pujant...",
+        "errors": "Errors",
+        "uploadedImages": "Imatges pujades ({current}/{max})",
+        "mainImage": "Principal",
+        "delete": "Eliminar",
+        "setAsMain": "Establir com a principal",
+        "imageAlt": "Imatge {number}"
+    },
+    "auth": {
+        "welcome": "Benvingut/da",
+        "loginSubtitle": "Inicia sessió per accedir al teu compte",
+        "loginWithZitadel": "Iniciar Sessió amb Zitadel",
+        "or": "o bé",
+        "email": "Email",
+        "password": "Contrasenya",
+        "invalidCredentials": "Credencials incorrectes",
+        "loginError": "Error al iniciar sessió",
+        "loggingIn": "Iniciant sessió...",
+        "demoLogin": "Login Demo",
+        "demoMode": "Mode Demo:",
+        "demoModeHint": "Qualsevol combinació d'email i contrasenya funciona per provar la plataforma.",
+        "noAccount": "No tens compte?",
+        "register": "Registra't",
+        "sideTitle": "Troba la teva propera llar",
+        "sideSubtitle": "Descobreix propietats úniques a Catalunya i les Illes Balears amb total confiança.",
+        "homeInterior": "Interior d'una llar"
+    },
+    "locations": {
+        "barcelona": "Barcelona",
+        "madrid": "Madrid",
+        "valencia": "València",
+        "girona": "Girona",
+        "tarragona": "Tarragona",
+        "lleida": "Lleida",
+        "costaBrava": "Costa Brava",
+        "costaDaurada": "Costa Daurada",
+        "pirineus": "Pirineus",
+        "mallorca": "Mallorca",
+        "eivissa": "Eivissa",
+        "menorca": "Menorca"
+    },
+    "metadata": {
+        "title": "Immobles - Troba el teu proper llar",
+        "description": "Descobreix propietats úniques a Catalunya i les Illes Balears. Compra, lloga o ven amb total confiança."
+    }
+}

@@ -1,0 +1,299 @@
+{
+    "common": {
+        "brand": "Inmuebles",
+        "loading": "Cargando...",
+        "error": "Error",
+        "yes": "Sí",
+        "no": "No",
+        "cancel": "Cancelar",
+        "save": "Guardar",
+        "delete": "Eliminar",
+        "edit": "Editar",
+        "search": "Buscar",
+        "noResults": "No se han encontrado resultados",
+        "rooms": "hab.",
+        "squareMeters": "m²"
+    },
+    "nav": {
+        "explore": "Explorar",
+        "publish": "Publicar",
+        "signIn": "Iniciar Sesión",
+        "signOut": "Cerrar Sesión",
+        "exploreProperties": "Explorar Inmuebles",
+        "openMenu": "Abrir menú",
+        "toggleMenu": "Alternar menú"
+    },
+    "home": {
+        "hero": {
+            "title": "Encuentra tu",
+            "titleLine2": "próximo hogar",
+            "subtitle": "Descubre propiedades únicas en Cataluña y las Islas Baleares. Compra, alquila o vende con total confianza.",
+            "cta": "Explorar Inmuebles",
+            "welcome": "Propietarios e inquilinos bienvenidos"
+        },
+        "locations": {
+            "title": "Inmuebles en las mejores ubicaciones",
+            "viewAll": "Ver todos",
+            "more": "+ Más"
+        },
+        "featured": {
+            "title": "Propiedades destacadas",
+            "subtitle": "Descubre las mejores opciones seleccionadas para ti",
+            "viewAll": "Ver todas"
+        },
+        "cta": {
+            "title": "¿Quieres publicar tu inmueble?",
+            "subtitle": "Llega a miles de compradores e inquilinos potenciales. Publica tu inmueble en minutos y empieza a recibir consultas.",
+            "button": "Publicar Inmueble"
+        },
+        "trust": {
+            "title": "Personas reales,",
+            "titleLine2": "hogares reales",
+            "point1": "Todos los propietarios están verificados y las propiedades revisadas",
+            "point2": "Contacta directamente con los propietarios sin intermediarios",
+            "point3": "Explora inmuebles reales, no anuncios genéricos",
+            "guarantee": "Garantía de satisfacción incluida en cada transacción"
+        },
+        "banner": {
+            "title": "Ahora disponible en Cataluña y las Islas Baleares.",
+            "cta": "Explorar Inmuebles"
+        },
+        "images": {
+            "modernHouse": "Casa moderna con jardín",
+            "elegantInterior": "Interior elegante",
+            "brightLiving": "Sala de estar luminosa",
+            "modernKitchen": "Cocina moderna",
+            "cozyHome": "Interior de un hogar acogedor"
+        }
+    },
+    "howItWorks": {
+        "title": "Cómo funciona",
+        "step1": {
+            "title": "Explora y descubre",
+            "description": "Navega por nuestro catálogo de propiedades verificadas. Filtra por ubicación, precio, tipo y características para encontrar exactamente lo que buscas."
+        },
+        "step2": {
+            "title": "Contacta con el propietario",
+            "description": "Una vez encuentres una propiedad que te interese, contacta directamente con el propietario. Responde tus preguntas y agenda una visita."
+        },
+        "step3": {
+            "title": "Cierra el trato con confianza",
+            "description": "Con el apoyo de nuestro equipo, completa la transacción de forma segura. Documentación verificada y garantía de satisfacción."
+        },
+        "moreInfo": "Más información"
+    },
+    "faq": {
+        "title": "¿Preguntas?",
+        "titleLine2": "Estamos aquí para ayudar",
+        "moreQuestions": "Más preguntas y respuestas",
+        "questions": {
+            "q1": {
+                "question": "¿Cómo puedo publicar mi inmueble?",
+                "answer": "Regístrate en la plataforma, verifica tu cuenta y después podrás publicar tu inmueble en pocos minutos. Añade fotos, descripción y precio. Nuestro equipo revisará la publicación para garantizar la calidad."
+            },
+            "q2": {
+                "question": "¿Qué costes tiene la plataforma?",
+                "answer": "Explorar inmuebles es completamente gratuito. Para los propietarios, ofrecemos diferentes planes según sus necesidades. El plan básico es gratuito y los planes premium ofrecen más visibilidad y funcionalidades."
+            },
+            "q3": {
+                "question": "¿Cómo se verifica la identidad de los propietarios?",
+                "answer": "Todos los propietarios deben verificar su identidad mediante un proceso seguro que incluye verificación de documentos y número de teléfono. Esto garantiza la seguridad de todos los usuarios."
+            },
+            "q4": {
+                "question": "¿Puedo alquilar y vender a la vez?",
+                "answer": "Sí, puedes indicar si tu inmueble está disponible para alquiler, venta o ambas opciones. Así llegas a más público interesado."
+            },
+            "q5": {
+                "question": "¿Cómo funciona el contacto con los propietarios?",
+                "answer": "Una vez encuentres un inmueble interesante, puedes enviar un mensaje directamente al propietario a través de la plataforma. Recibirás notificaciones cuando te responda."
+            }
+        }
+    },
+    "footer": {
+        "tagline": "La plataforma de confianza para encontrar tu próximo hogar.",
+        "properties": {
+            "title": "Propiedades",
+            "explore": "Explorar",
+            "publish": "Publicar",
+            "rent": "Alquiler",
+            "sale": "Venta"
+        },
+        "company": {
+            "title": "Empresa",
+            "about": "Sobre Nosotros",
+            "contact": "Contacto",
+            "faq": "Preguntas Frecuentes"
+        },
+        "legal": {
+            "title": "Legal",
+            "privacy": "Privacidad",
+            "terms": "Términos y Condiciones",
+            "cookies": "Política de Cookies"
+        },
+        "copyright": "Todos los derechos reservados."
+    },
+    "properties": {
+        "title": "Inmuebles disponibles",
+        "subtitle": "Encuentra la propiedad perfecta para ti",
+        "publishButton": "Publicar Inmueble",
+        "searchPlaceholder": "Busca por ubicación o palabras clave...",
+        "minPrice": "Precio mínimo",
+        "maxPrice": "Precio máximo",
+        "rooms": "Habitaciones",
+        "roomsOption": "{count} hab.",
+        "roomsOptionPlus": "4+ hab.",
+        "searchButton": "Buscar",
+        "noResults": "No se han encontrado inmuebles",
+        "noResultsHint": "Prueba con otros criterios de búsqueda",
+        "clearFilters": "Limpiar filtros",
+        "resultsCount": "{count} {count, plural, one {inmueble encontrado} other {inmuebles encontrados}}",
+        "noTitle": "Sin título",
+        "noProperties": "No hay propiedades disponibles en este momento.",
+        "publishFirst": "Publica la primera propiedad",
+        "loginToSee": "Inicia sesión para ver detalles"
+    },
+    "propertyDetail": {
+        "notFound": "Inmueble no encontrado",
+        "notFoundHint": "El inmueble que buscas no existe o ha sido eliminado.",
+        "backToList": "Volver al listado",
+        "description": "Descripción",
+        "characteristics": "Características",
+        "floors": "Plantas",
+        "orientation": "Orientación",
+        "condition": "Estado",
+        "elevator": "Ascensor",
+        "furnished": "Amueblado",
+        "tags": "Etiquetas",
+        "contact": "Contacta",
+        "owner": "Propietario",
+        "identityVerified": "Identidad verificada",
+        "contactButton": "Contactar",
+        "loginToContact": "Inicia sesión para contactar con el propietario",
+        "energyEfficiency": "Eficiencia Energética",
+        "energyLabel": "Etiqueta:",
+        "emissions": "Emisiones: {value} kg CO₂/m²/año",
+        "imageAlt": "Imagen {number}",
+        "contactInDevelopment": "Funcionalidad de contacto en desarrollo",
+        "bedroomsCount": "{count} habitaciones"
+    },
+    "newProperty": {
+        "title": "Publicar Nuevo Inmueble",
+        "loginRequired": "Es necesario iniciar sesión",
+        "loginRequiredHint": "Debes estar autenticado para publicar un inmueble",
+        "errorCreate": "Error al crear el inmueble. Por favor, inténtalo de nuevo.",
+        "errorConnection": "Error de conexión. Por favor, verifica que el backend está funcionando.",
+        "basicInfo": {
+            "title": "Información Básica",
+            "propertyTitle": "Título",
+            "propertyTitlePlaceholder": "Ej: Piso moderno en el centro de Barcelona",
+            "description": "Descripción",
+            "descriptionPlaceholder": "Describe el inmueble...",
+            "type": "Tipo",
+            "typeOptions": {
+                "pis": "Piso",
+                "casa": "Casa",
+                "xalet": "Chalet",
+                "estudi": "Estudio"
+            },
+            "price": "Precio (€)",
+            "rooms": "Habitaciones",
+            "squareMeters": "Metros Cuadrados"
+        },
+        "location": {
+            "title": "Ubicación",
+            "municipality": "Municipio",
+            "province": "Provincia",
+            "autonomousCommunity": "Comunidad Autónoma"
+        },
+        "characteristics": {
+            "title": "Características",
+            "floors": "Plantas",
+            "orientation": "Orientación",
+            "orientationOptions": {
+                "select": "Selecciona...",
+                "north": "Norte",
+                "south": "Sur",
+                "east": "Este",
+                "west": "Oeste"
+            },
+            "condition": "Estado",
+            "conditionOptions": {
+                "new": "Nuevo",
+                "almostNew": "Casi nuevo",
+                "good": "Buen estado",
+                "toRenovate": "A reformar"
+            },
+            "energyLabel": "Etiqueta Energética",
+            "elevator": "Ascensor",
+            "furnished": "Amueblado"
+        },
+        "images": {
+            "title": "Imágenes"
+        },
+        "privacy": {
+            "title": "Privacidad",
+            "privateProperty": "Inmueble privado (con requisitos de acceso)"
+        },
+        "submit": {
+            "cancel": "Cancelar",
+            "publishing": "Publicando...",
+            "publish": "Publicar Inmueble"
+        }
+    },
+    "imageUploader": {
+        "invalidFormat": "Formato no válido: {filename}. Formatos permitidos: JPEG, PNG, WebP",
+        "fileTooLarge": "Archivo demasiado grande: {filename}. Máximo {maxSize}MB",
+        "maxImagesReached": "Ya has alcanzado el máximo de {max} imágenes",
+        "errorGettingUrl": "Error obteniendo URL de subida",
+        "errorUploading": "Error subiendo imagen",
+        "networkError": "Error de red",
+        "unknownError": "Error desconocido",
+        "selectFiles": "Selecciona archivos",
+        "dragHere": "o arrástralos aquí",
+        "fileTypes": "JPEG, PNG o WebP. Máximo {maxSize}MB por imagen. Hasta {maxImages} imágenes.",
+        "uploading": "Subiendo...",
+        "errors": "Errores",
+        "uploadedImages": "Imágenes subidas ({current}/{max})",
+        "mainImage": "Principal",
+        "delete": "Eliminar",
+        "setAsMain": "Establecer como principal",
+        "imageAlt": "Imagen {number}"
+    },
+    "auth": {
+        "welcome": "Bienvenido/a",
+        "loginSubtitle": "Inicia sesión para acceder a tu cuenta",
+        "loginWithZitadel": "Iniciar Sesión con Zitadel",
+        "or": "o bien",
+        "email": "Email",
+        "password": "Contraseña",
+        "invalidCredentials": "Credenciales incorrectas",
+        "loginError": "Error al iniciar sesión",
+        "loggingIn": "Iniciando sesión...",
+        "demoLogin": "Login Demo",
+        "demoMode": "Modo Demo:",
+        "demoModeHint": "Cualquier combinación de email y contraseña funciona para probar la plataforma.",
+        "noAccount": "¿No tienes cuenta?",
+        "register": "Regístrate",
+        "sideTitle": "Encuentra tu próximo hogar",
+        "sideSubtitle": "Descubre propiedades únicas en Cataluña y las Islas Baleares con total confianza.",
+        "homeInterior": "Interior de un hogar"
+    },
+    "locations": {
+        "barcelona": "Barcelona",
+        "madrid": "Madrid",
+        "valencia": "Valencia",
+        "girona": "Girona",
+        "tarragona": "Tarragona",
+        "lleida": "Lleida",
+        "costaBrava": "Costa Brava",
+        "costaDaurada": "Costa Dorada",
+        "pirineus": "Pirineos",
+        "mallorca": "Mallorca",
+        "eivissa": "Ibiza",
+        "menorca": "Menorca"
+    },
+    "metadata": {
+        "title": "Inmuebles - Encuentra tu próximo hogar",
+        "description": "Descubre propiedades únicas en Cataluña y las Islas Baleares. Compra, alquila o vende con total confianza."
+    }
+}
