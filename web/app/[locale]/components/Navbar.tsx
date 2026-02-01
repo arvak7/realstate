@@ -5,6 +5,7 @@ import { useSession, signOut, signIn } from "next-auth/react";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import LanguageSwitcher from "./LanguageSwitcher";
+import UserAvatar from "../../components/UserAvatar";
 
 export default function Navbar() {
     const { data: session } = useSession();
@@ -38,9 +39,16 @@ export default function Navbar() {
                                 >
                                     {t("publish")}
                                 </Link>
-                                <span className="text-sm text-kindred-gray px-3">
-                                    {session.user?.email}
-                                </span>
+                                <div className="flex items-center gap-3 px-3">
+                                    <UserAvatar
+                                        photoUrl={session.user?.effectiveProfileImage}
+                                        name={session.user?.name}
+                                        size="sm"
+                                    />
+                                    <span className="text-sm text-kindred-gray">
+                                        {session.user?.name || session.user?.email}
+                                    </span>
+                                </div>
                                 <button
                                     onClick={() => signOut()}
                                     className="btn-secondary text-sm py-2 px-5"
@@ -118,8 +126,15 @@ export default function Navbar() {
                                     >
                                         {t("publish")}
                                     </Link>
-                                    <div className="px-4 py-2 text-sm text-kindred-gray">
-                                        {session.user?.email}
+                                    <div className="flex items-center gap-3 px-4 py-2">
+                                        <UserAvatar
+                                            photoUrl={session.user?.effectiveProfileImage}
+                                            name={session.user?.name}
+                                            size="sm"
+                                        />
+                                        <span className="text-sm text-kindred-gray">
+                                            {session.user?.name || session.user?.email}
+                                        </span>
                                     </div>
                                     <button
                                         onClick={() => {

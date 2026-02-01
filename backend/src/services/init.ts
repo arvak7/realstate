@@ -1,27 +1,34 @@
 import { minioClient, MINIO_BUCKET, esClient } from '../config';
 
+// Export for use in other modules
+export { minioClient };
+
 // Helper to check if bucket exists
 export async function initMinio() {
-    try {
-        const exists = await minioClient.bucketExists(MINIO_BUCKET);
-        if (!exists) {
-            await minioClient.makeBucket(MINIO_BUCKET, 'us-east-1');
-            console.log(`Bucket ${MINIO_BUCKET} created.`);
-            const policy = {
-                Version: "2012-10-17",
-                Statement: [
-                    {
-                        Effect: "Allow",
-                        Principal: { AWS: "*" },
-                        Action: ["s3:GetObject"],
-                        Resource: [`arn:aws:s3:::${MINIO_BUCKET}/*`],
-                    },
-                ],
-            };
-            await minioClient.setBucketPolicy(MINIO_BUCKET, JSON.stringify(policy));
+    const buckets = [MINIO_BUCKET, 'user-profiles'];
+
+    for (const bucket of buckets) {
+        try {
+            const exists = await minioClient.bucketExists(bucket);
+            if (!exists) {
+                await minioClient.makeBucket(bucket, 'us-east-1');
+                console.log(`Bucket ${bucket} created.`);
+                const policy = {
+                    Version: "2012-10-17",
+                    Statement: [
+                        {
+                            Effect: "Allow",
+                            Principal: { AWS: "*" },
+                            Action: ["s3:GetObject"],
+                            Resource: [`arn:aws:s3:::${bucket}/*`],
+                        },
+                    ],
+                };
+                await minioClient.setBucketPolicy(bucket, JSON.stringify(policy));
+            }
+        } catch (err) {
+            console.error(`Minio init error for bucket ${bucket}:`, err);
         }
-    } catch (err) {
-        console.error("Minio init error:", err);
     }
 }
 

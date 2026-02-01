@@ -95,6 +95,7 @@ async function main() {
         create: {
             email: 'demo@realstate.com',
             name: 'Demo User',
+            profilePhotoUrl: 'https://i.pravatar.cc/150?u=demo',
             authProvider: 'email',
             identityVerified: true,
         },
@@ -108,6 +109,7 @@ async function main() {
         create: {
             email: 'admin@realstate.com',
             name: 'Admin User',
+            profilePhotoUrl: 'https://i.pravatar.cc/150?u=admin',
             authProvider: 'email',
             identityVerified: true,
         },

@@ -8,15 +8,17 @@ datasource db {
 }
 
 model User {
-  id               String   @id @default(uuid())
-  email            String   @unique
-  name             String?
-  passwordHash     String?  @map("password_hash")
-  authProvider     String   @map("auth_provider") // 'email', 'google', 'facebook'
-  providerId       String?  @map("provider_id")
-  identityVerified Boolean  @default(false) @map("identity_verified")
-  createdAt        DateTime @default(now()) @map("created_at")
-  updatedAt        DateTime @updatedAt @map("updated_at")
+  id                String   @id @default(uuid())
+  email             String   @unique
+  name              String?
+  profilePhotoUrl   String?  @map("profile_photo_url")
+  oauthProfileImage String?  @map("oauth_profile_image")
+  passwordHash      String?  @map("password_hash")
+  authProvider      String   @map("auth_provider") // 'email', 'google', 'facebook'
+  providerId        String?  @map("provider_id")
+  identityVerified  Boolean  @default(false) @map("identity_verified")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
 
   properties            Property[]
   contacts              Contact[]
@@ -43,6 +45,7 @@ model Property {
   latitude           Float?
   longitude          Float?
   address            String?
+  privacyRadius      Int?     @default(0) @map("privacy_radius")
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 

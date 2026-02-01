@@ -107,6 +107,42 @@ GoogleProvider({
 
 ---
 
-**Data**: 2026-01-26  
-**Decisió**: Demo Login per POC, Zitadel/Auth0 per producció  
+## Gestió d'Imatges de Perfil
+
+### Camps de Base de Dades
+
+- `profilePhotoUrl`: Imatge pujada manualment per l'usuari (MinIO/S3)
+- `oauthProfileImage`: Imatge obtinguda del proveïdor OAuth (Zitadel, Google, Facebook)
+
+### Prioritat d'Imatges
+
+1. **Imatge Local** (`profilePhotoUrl`) - Pujada per l'usuari via ProfilePhotoUploader
+2. **Imatge OAuth** (`oauthProfileImage`) - Del proveïdor extern (Zitadel/Google/etc)
+3. **Avatar Generat** - Inicials amb color basat en nom (fallback automàtic)
+
+### Camp Computat
+
+`effectiveProfileImage` és un camp de sessió que combina automàticament les imatges segons prioritat:
+
+```typescript
+effectiveProfileImage = profilePhotoUrl || oauthProfileImage || null
+```
+
+### Flux d'Imatges
+
+1. **Login OAuth**: El callback `signIn` captura `profile.picture` i ho guarda a `oauthProfileImage`
+2. **Login Demo**: El CredentialsProvider consulta el backend per obtenir `profilePhotoUrl` existent
+3. **Upload Manual**: L'usuari pot pujar imatge via ProfilePhotoUploader, que actualitza `profilePhotoUrl`
+4. **Eliminació**: Quan s'elimina la imatge local, `effectiveProfileImage` torna a mostrar l'OAuth o avatar generat
+
+### API Interna
+
+- **Endpoint**: `GET /me/internal/by-email?email=...`
+- **Autenticació**: Header `x-internal-api-key`
+- **Ús**: Permet al CredentialsProvider obtenir dades reals de l'usuari durant login demo
+
+---
+
+**Data**: 2026-01-26 (actualitzat 2026-01-31)
+**Decisió**: Demo Login per POC, Zitadel/Auth0 per producció
 **Estat**: ✅ Implementat i funcionant

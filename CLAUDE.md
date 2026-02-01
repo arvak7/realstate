@@ -119,3 +119,11 @@ Backend uses `.env`, frontend uses `.env.local`. Key variables:
 | MinIO Console | 9001  | minioadmin / minioadminpassword|
 | Zitadel       | 8443  | admin / Admin123!              |
 | Caddy (HTTPS) | 443   | https://localhost              |
+
+## Playwright Browser Testing
+
+**IMPORTANT - Browser Configuration:**
+- **Always use Firefox** instead of Chrome/Chromium for Playwright operations (Chrome causes system stability issues)
+- **Maximum 3 tabs open at any time** - Close tabs before opening new ones
+- **Avoid infinite loops** - Do not enter repetitive navigation patterns that consume tokens unnecessarily
+- When finished testing, always close the browser with `browser_close`
