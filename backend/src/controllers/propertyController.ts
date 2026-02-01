@@ -1,10 +1,22 @@
 import { Request, Response } from 'express';
 import { prisma, esClient, minioClient, MINIO_BUCKET } from '../config';
 import { AuthenticatedRequest } from '../middleware/auth';
+import { obfuscateLocation, sanitizeAddress, isValidCoordinates } from '../utils/location';
+import { validatePrivacyRadius, FEATURES } from '../config/features';
 
 export const getProperties = async (req: Request, res: Response) => {
     try {
-        const { page = 1, limit = 20, search, minPrice, maxPrice, rooms, municipality } = req.query;
+        const {
+            page = 1,
+            limit = 20,
+            search,
+            minPrice,
+            maxPrice,
+            rooms,
+            lat,
+            lon,
+            radius = '5km'
+        } = req.query;
 
         // Build Elasticsearch query
         const must: any[] = [];
@@ -14,7 +26,7 @@ export const getProperties = async (req: Request, res: Response) => {
             must.push({
                 multi_match: {
                     query: search,
-                    fields: ['basic_info.title^2', 'basic_info.description', 'location.municipality']
+                    fields: ['basic_info.title^2', 'basic_info.description', 'location.address']
                 }
             });
         }
@@ -30,8 +42,21 @@ export const getProperties = async (req: Request, res: Response) => {
             filter.push({ term: { 'basic_info.rooms': parseInt(rooms as string) } });
         }
 
-        if (municipality) {
-            filter.push({ term: { 'location.municipality': municipality } });
+        // Geo distance search
+        if (lat && lon) {
+            const latitude = parseFloat(lat as string);
+            const longitude = parseFloat(lon as string);
+            if (isValidCoordinates(latitude, longitude)) {
+                filter.push({
+                    geo_distance: {
+                        distance: radius as string,
+                        'location.coordinates': {
+                            lat: latitude,
+                            lon: longitude
+                        }
+                    }
+                });
+            }
         }
 
         const esQuery = {
@@ -128,9 +153,34 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
             }
         });
 
+        // Check if requester is the owner (can see exact location)
+        const isOwner = req.auth?.payload?.sub === property.ownerId;
+        const esSource = (esResult._source as any) || {};
+
+        // Prepare location response - obfuscate for non-owners
+        let locationResponse = esSource.location;
+        if (!isOwner && property.latitude && property.longitude) {
+            const obfuscated = obfuscateLocation(
+                property.latitude,
+                property.longitude,
+                property.privacyRadius
+            );
+            locationResponse = {
+                ...esSource.location,
+                coordinates: {
+                    lat: obfuscated.latitude,
+                    lon: obfuscated.longitude
+                },
+                address: sanitizeAddress(property.address),
+                privacyRadius: property.privacyRadius,
+                isApproximate: true
+            };
+        }
+
         res.json({
             ...property,
-            ...((esResult._source as any) || {})
+            ...esSource,
+            location: locationResponse
         });
     } catch (e) {
         console.error(e);
@@ -143,13 +193,40 @@ export const createProperty = async (req: AuthenticatedRequest, res: Response) =
         const userId = req.auth!.payload.sub;
         const propertyData = req.body;
 
-        // Create document in Elasticsearch
+        // Extract and validate location data
+        const locationInput = propertyData.location || {};
+        console.log('DEBUG: locationInput', JSON.stringify(locationInput));
+        const latitude = parseFloat(locationInput.latitude);
+        const longitude = parseFloat(locationInput.longitude);
+        const address = locationInput.address || '';
+        const privacyRadius = validatePrivacyRadius(locationInput.privacyRadius);
+        console.log('DEBUG: Parsed values', { latitude, longitude, address, privacyRadius });
+
+        if (!isValidCoordinates(latitude, longitude)) {
+            return res.status(400).json({ error: 'Invalid coordinates. Latitude must be -90 to 90, longitude -180 to 180.' });
+        }
+
+        if (!address.trim()) {
+            return res.status(400).json({ error: 'Address is required.' });
+        }
+
+        // Obfuscate location for Elasticsearch (public search)
+        const obfuscated = obfuscateLocation(latitude, longitude, privacyRadius);
+
+        // Create document in Elasticsearch with obfuscated coordinates
         const esResponse = await esClient.index({
             index: 'properties',
             document: {
                 owner_id: userId,
                 basic_info: propertyData.basic_info || {},
-                location: propertyData.location || {},
+                location: {
+                    coordinates: {
+                        lat: obfuscated.latitude,
+                        lon: obfuscated.longitude
+                    },
+                    address: sanitizeAddress(address),
+                    privacyRadius: privacyRadius
+                },
                 characteristics: propertyData.characteristics || {},
                 energy: propertyData.energy || {},
                 tags: propertyData.tags || [],
@@ -169,11 +246,15 @@ export const createProperty = async (req: AuthenticatedRequest, res: Response) =
             }
         });
 
-        // Create reference in PostgreSQL
+        // Create reference in PostgreSQL with exact coordinates
         const property = await prisma.property.create({
             data: {
                 ownerId: userId,
                 elasticsearchId: esResponse._id,
+                latitude: latitude,
+                longitude: longitude,
+                address: address,
+                privacyRadius: privacyRadius,
                 isPrivate: propertyData.isPrivate || false,
                 accessRequirements: propertyData.accessRequirements || null
             }
@@ -205,13 +286,49 @@ export const updateProperty = async (req: AuthenticatedRequest, res: Response) =
             return res.status(403).json({ error: 'Forbidden' });
         }
 
+        // Extract and validate location if provided
+        let latitude = property.latitude;
+        let longitude = property.longitude;
+        let address = property.address;
+        let privacyRadius = property.privacyRadius;
+
+        if (propertyData.location) {
+            const locationInput = propertyData.location;
+            if (locationInput.latitude !== undefined) {
+                latitude = parseFloat(locationInput.latitude);
+            }
+            if (locationInput.longitude !== undefined) {
+                longitude = parseFloat(locationInput.longitude);
+            }
+            if (locationInput.address !== undefined) {
+                address = locationInput.address;
+            }
+            if (locationInput.privacyRadius !== undefined) {
+                privacyRadius = validatePrivacyRadius(locationInput.privacyRadius);
+            }
+
+            if (!isValidCoordinates(latitude, longitude)) {
+                return res.status(400).json({ error: 'Invalid coordinates.' });
+            }
+        }
+
+        // Obfuscate location for Elasticsearch
+        const obfuscated = obfuscateLocation(latitude, longitude, privacyRadius);
+
         // Update Elasticsearch
         await esClient.update({
             index: 'properties',
             id: property.elasticsearchId,
             doc: {
                 basic_info: propertyData.basic_info,
-                location: propertyData.location,
+                location: {
+                    coordinates: {
+                        lat: obfuscated.latitude,
+                        lon: obfuscated.longitude
+                    },
+                    address: sanitizeAddress(address),
+                    privacyRadius: privacyRadius
+                },
                 characteristics: propertyData.characteristics,
                 energy: propertyData.energy,
                 tags: propertyData.tags,
@@ -221,10 +338,14 @@ export const updateProperty = async (req: AuthenticatedRequest, res: Response) =
             }
         });
 
-        // Update PostgreSQL
+        // Update PostgreSQL with exact coordinates
         const updatedProperty = await prisma.property.update({
             where: { id },
             data: {
+                latitude: latitude,
+                longitude: longitude,
+                address: address,
+                privacyRadius: privacyRadius,
                 isPrivate: propertyData.isPrivate,
                 accessRequirements: propertyData.accessRequirements,
                 status: propertyData.status

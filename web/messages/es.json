@@ -189,40 +189,25 @@
             "description": "Descripción",
             "descriptionPlaceholder": "Describe el inmueble...",
             "type": "Tipo",
-            "typeOptions": {
-                "pis": "Piso",
-                "casa": "Casa",
-                "xalet": "Chalet",
-                "estudi": "Estudio"
-            },
+            "select": "Selecciona...",
             "price": "Precio (€)",
             "rooms": "Habitaciones",
             "squareMeters": "Metros Cuadrados"
         },
         "location": {
             "title": "Ubicación",
-            "municipality": "Municipio",
-            "province": "Provincia",
-            "autonomousCommunity": "Comunidad Autónoma"
+            "address": "Dirección",
+            "privacyRadius": "Radio de privacidad",
+            "exactLocation": "Ubicación exacta",
+            "approximateLocation": "Ubicación aproximada",
+            "privacyHint": "Selecciona el radio en el que se mostrará tu propiedad a los buscadores. La dirección exacta solo será visible para ti."
         },
         "characteristics": {
             "title": "Características",
             "floors": "Plantas",
             "orientation": "Orientación",
-            "orientationOptions": {
-                "select": "Selecciona...",
-                "north": "Norte",
-                "south": "Sur",
-                "east": "Este",
-                "west": "Oeste"
-            },
             "condition": "Estado",
-            "conditionOptions": {
-                "new": "Nuevo",
-                "almostNew": "Casi nuevo",
-                "good": "Buen estado",
-                "toRenovate": "A reformar"
-            },
+            "select": "Selecciona...",
             "energyLabel": "Etiqueta Energética",
             "elevator": "Ascensor",
             "furnished": "Amueblado"

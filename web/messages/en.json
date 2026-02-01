@@ -189,40 +189,25 @@
             "description": "Description",
             "descriptionPlaceholder": "Describe the property...",
             "type": "Type",
-            "typeOptions": {
-                "pis": "Apartment",
-                "casa": "House",
-                "xalet": "Villa",
-                "estudi": "Studio"
-            },
+            "select": "Select...",
             "price": "Price (€)",
             "rooms": "Bedrooms",
             "squareMeters": "Square Meters"
         },
         "location": {
             "title": "Location",
-            "municipality": "Municipality",
-            "province": "Province",
-            "autonomousCommunity": "Autonomous Community"
+            "address": "Address",
+            "privacyRadius": "Privacy Radius",
+            "exactLocation": "Exact Location",
+            "approximateLocation": "Approximate Location",
+            "privacyHint": "Select the radius within which your property will be shown to searchers. The exact address will only be visible to you."
         },
         "characteristics": {
             "title": "Characteristics",
             "floors": "Floors",
             "orientation": "Orientation",
-            "orientationOptions": {
-                "select": "Select...",
-                "north": "North",
-                "south": "South",
-                "east": "East",
-                "west": "West"
-            },
             "condition": "Condition",
-            "conditionOptions": {
-                "new": "New",
-                "almostNew": "Almost new",
-                "good": "Good condition",
-                "toRenovate": "To renovate"
-            },
+            "select": "Select...",
             "energyLabel": "Energy Label",
             "elevator": "Elevator",
             "furnished": "Furnished"

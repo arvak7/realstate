@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import ImageUploader, { UploadedImage } from "@/app/components/ImageUploader";
+import LocationPicker, { LocationData } from "@/app/components/LocationPicker";
 import { useCatalogs } from "@/app/hooks/useCatalogs";
 
 export default function NewPropertyPage() {
@@ -20,9 +21,6 @@ export default function NewPropertyPage() {
         rooms: "",
         square_meters: "",
         type: "",
-        latitude: "",
-        longitude: "",
-        address: "",
         floors: "",
         orientation: "",
         condition: "",
@@ -33,10 +31,17 @@ export default function NewPropertyPage() {
         isPrivate: false,
     });
     const [images, setImages] = useState<UploadedImage[]>([]);
+    const [location, setLocation] = useState<LocationData | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+
+        if (!location) {
+            setError("Cal seleccionar una ubicacio per a l'immoble.");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -50,9 +55,10 @@ export default function NewPropertyPage() {
                     type: formData.type,
                 },
                 location: {
-                    latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
-                    longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
-                    address: formData.address || undefined,
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    address: location.address,
+                    privacyRadius: location.privacyRadius,
                 },
                 characteristics: {
                     floors: formData.floors ? parseInt(formData.floors) : undefined,
@@ -83,10 +89,11 @@ export default function NewPropertyPage() {
                 const property = await response.json();
                 router.push(`/properties/${property.id}`);
             } else {
-                setError("Error al crear l'immoble. Si us plau, torna-ho a intentar.");
+                const errorData = await response.json().catch(() => ({}));
+                setError(errorData.error || "Error al crear l'immoble. Si us plau, torna-ho a intentar.");
             }
         } catch (err) {
-            setError("Error de connexió. Si us plau, verifica que el backend està en funcionament.");
+            setError("Error de connexio. Si us plau, verifica que el backend esta en funcionament.");
         } finally {
             setLoading(false);
         }
@@ -97,16 +104,16 @@ export default function NewPropertyPage() {
             <div className="min-h-screen flex items-center justify-center bg-neutral-cream">
                 <div className="text-center">
                     <h1 className="text-2xl font-semibold text-text-primary mb-4">
-                        Cal iniciar sessió
+                        Cal iniciar sessio
                     </h1>
                     <p className="text-text-secondary mb-6">
-                        Has d'estar autenticat per publicar un immoble
+                        Has d estar autenticat per publicar un immoble
                     </p>
                     <button
                         onClick={() => router.push("/auth/signin")}
                         className="bg-primary-dark text-white px-8 py-3 rounded-full font-semibold hover:bg-primary transition-all duration-300 shadow-soft"
                     >
-                        Iniciar Sessió
+                        Iniciar Sessio
                     </button>
                 </div>
             </div>
@@ -134,15 +141,15 @@ export default function NewPropertyPage() {
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* Informació Bàsica */}
+                        {/* Informacio Basica */}
                         <div>
                             <h2 className="text-2xl font-semibold text-text-primary mb-5 tracking-tight">
-                                Informació Bàsica
+                                Informacio Basica
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-text-primary mb-2">
-                                        Títol *
+                                        Titol *
                                     </label>
                                     <input
                                         type="text"
@@ -158,7 +165,7 @@ export default function NewPropertyPage() {
 
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-text-primary mb-2">
-                                        Descripció *
+                                        Descripcio *
                                     </label>
                                     <textarea
                                         required
@@ -196,7 +203,7 @@ export default function NewPropertyPage() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-text-primary mb-2">
-                                        Preu (€) *
+                                        Preu (EUR) *
                                     </label>
                                     <input
                                         type="number"
@@ -249,66 +256,21 @@ export default function NewPropertyPage() {
                             </div>
                         </div>
 
-                        {/* Location */}
-                        <div className="bg-white rounded-lg p-6 shadow-sm">
-                            <h2 className="text-xl font-semibold text-text-primary mb-4">Ubicació</h2>
-                            <div className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-text-secondary mb-2">
-                                        Adreça
-                                    </label>
-                                    <input
-                                        type="text"
-                                        placeholder="Ex: Carrer de Balmes 123, Barcelona"
-                                        value={formData.address}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, address: e.target.value })
-                                        }
-                                        className="w-full px-4 py-2 border border-neutral-sand rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-sage"
-                                    />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-text-secondary mb-2">
-                                            Latitud
-                                        </label>
-                                        <input
-                                            type="number"
-                                            step="any"
-                                            placeholder="41.3874"
-                                            value={formData.latitude}
-                                            onChange={(e) =>
-                                                setFormData({ ...formData, latitude: e.target.value })
-                                            }
-                                            className="w-full px-4 py-2 border border-neutral-sand rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-sage"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-text-secondary mb-2">
-                                            Longitud
-                                        </label>
-                                        <input
-                                            type="number"
-                                            step="any"
-                                            placeholder="2.1686"
-                                            value={formData.longitude}
-                                            onChange={(e) =>
-                                                setFormData({ ...formData, longitude: e.target.value })
-                                            }
-                                            className="w-full px-4 py-2 border border-neutral-sand rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-sage"
-                                        />
-                                    </div>
-                                </div>
-                                <p className="text-sm text-text-tertiary">
-                                    💡 Consell: Pots obtenir les coordenades des de Google Maps fent clic dret sobre la ubicació
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Característiques */}
+                        {/* Ubicacio */}
                         <div>
                             <h2 className="text-2xl font-semibold text-text-primary mb-5 tracking-tight">
-                                Característiques
+                                Ubicacio *
+                            </h2>
+                            <LocationPicker
+                                value={location}
+                                onChange={setLocation}
+                            />
+                        </div>
+
+                        {/* Caracteristiques */}
+                        <div>
+                            <h2 className="text-2xl font-semibold text-text-primary mb-5 tracking-tight">
+                                Caracteristiques
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
@@ -329,7 +291,7 @@ export default function NewPropertyPage() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-text-primary mb-2">
-                                        Orientació
+                                        Orientacio
                                     </label>
                                     <select
                                         value={formData.orientation}
@@ -371,7 +333,7 @@ export default function NewPropertyPage() {
 
                                 <div>
                                     <label className="block text-sm font-medium text-text-primary mb-2">
-                                        Etiqueta Energètica
+                                        Etiqueta Energetica
                                     </label>
                                     <select
                                         value={formData.energy_label}
@@ -451,7 +413,7 @@ export default function NewPropertyPage() {
                                     className="w-4 h-4 text-primary-dark border-neutral-warm rounded focus:ring-primary-dark"
                                 />
                                 <span className="text-sm font-medium text-text-primary">
-                                    Immoble privat (amb requisits d'accés)
+                                    Immoble privat (amb requisits d acces)
                                 </span>
                             </label>
                         </div>
@@ -467,7 +429,7 @@ export default function NewPropertyPage() {
                             </button>
                             <button
                                 type="submit"
-                                disabled={loading}
+                                disabled={loading || !location}
                                 className="flex-1 bg-primary-dark text-white py-3 rounded-xl font-semibold hover:bg-primary transition disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {loading ? "Publicant..." : "Publicar Immoble"}

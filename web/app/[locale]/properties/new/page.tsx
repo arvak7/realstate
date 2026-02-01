@@ -6,6 +6,7 @@ import { useRouter } from "@/i18n/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import ImageUploader, { UploadedImage } from "@/app/[locale]/components/ImageUploader";
 import { useCatalogs } from "@/app/hooks/useCatalogs";
+import LocationPicker, { LocationData } from "@/app/components/LocationPicker";
 
 export default function NewPropertyPage() {
     const { data: session } = useSession();
@@ -24,9 +25,6 @@ export default function NewPropertyPage() {
         rooms: "",
         square_meters: "",
         type: "",
-        municipality: "",
-        province: "",
-        autonomous_community: "",
         floors: "",
         orientation: "",
         condition: "",
@@ -36,21 +34,18 @@ export default function NewPropertyPage() {
         tags: [] as string[],
         isPrivate: false,
     });
+    const [location, setLocation] = useState<LocationData | null>(null);
     const [images, setImages] = useState<UploadedImage[]>([]);
-
-    // Helper function to get label based on locale
-    const getLabel = (item: any) => {
-        if (item.label) return item.label; // For energy labels
-        if (item.name) return item.name; // For provinces/municipalities
-        // For property types, conditions, orientations
-        if (locale === 'ca') return item.labelCa;
-        if (locale === 'es') return item.labelEs;
-        return item.labelEn || item.labelCa;
-    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
+
+        if (!location) {
+            setError(t("location.requiredError") || "Ubicació requerida");
+            return;
+        }
+
         setLoading(true);
 
         try {
@@ -64,9 +59,10 @@ export default function NewPropertyPage() {
                     type: formData.type,
                 },
                 location: {
-                    municipality: formData.municipality,
-                    province: formData.province,
-                    autonomous_community: formData.autonomous_community,
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    address: location.address,
+                    privacyRadius: location.privacyRadius,
                 },
                 characteristics: {
                     floors: formData.floors ? parseInt(formData.floors) : undefined,
@@ -199,10 +195,10 @@ export default function NewPropertyPage() {
                                         disabled={catalogs.loading}
                                         className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
                                     >
-                                        <option value="">{t("basicInfo.typeOptions.select")}</option>
+                                        <option value="">{t("basicInfo.select")}</option>
                                         {catalogs.propertyTypes.map((type) => (
                                             <option key={type.code} value={type.code}>
-                                                {getLabel(type)}
+                                                {type.label}
                                             </option>
                                         ))}
                                     </select>
@@ -266,58 +262,13 @@ export default function NewPropertyPage() {
                         {/* Ubicació */}
                         <div>
                             <h2 className="text-2xl font-semibold text-text-primary mb-5 tracking-tight">{t("location.title")}</h2>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-text-primary mb-2">
-                                        {t("location.municipality")} *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.municipality}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, municipality: e.target.value })
-                                        }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
-                                        placeholder="Barcelona"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-text-primary mb-2">
-                                        {t("location.province")} *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.province}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, province: e.target.value })
-                                        }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
-                                        placeholder="Barcelona"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className="block text-sm font-medium text-text-primary mb-2">
-                                        {t("location.autonomousCommunity")} *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.autonomous_community}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                autonomous_community: e.target.value,
-                                            })
-                                        }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
-                                        placeholder="Catalunya"
-                                    />
-                                </div>
-                            </div>
+                            <p className="text-sm text-text-secondary mb-4">
+                                {t("location.privacyHint")}
+                            </p>
+                            <LocationPicker
+                                value={location}
+                                onChange={setLocation}
+                            />
                         </div>
 
                         {/* Característiques */}
@@ -354,10 +305,10 @@ export default function NewPropertyPage() {
                                         disabled={catalogs.loading}
                                         className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
                                     >
-                                        <option value="">{t("characteristics.orientationOptions.select")}</option>
+                                        <option value="">{t("characteristics.select")}</option>
                                         {catalogs.orientations.map((orientation) => (
                                             <option key={orientation.code} value={orientation.code}>
-                                                {getLabel(orientation)}
+                                                {orientation.label}
                                             </option>
                                         ))}
                                     </select>
@@ -375,10 +326,10 @@ export default function NewPropertyPage() {
                                         disabled={catalogs.loading}
                                         className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
                                     >
-                                        <option value="">{t("characteristics.conditionOptions.select")}</option>
+                                        <option value="">{t("characteristics.select")}</option>
                                         {catalogs.conditions.map((condition) => (
                                             <option key={condition.code} value={condition.code}>
-                                                {getLabel(condition)}
+                                                {condition.label}
                                             </option>
                                         ))}
                                     </select>
@@ -396,7 +347,7 @@ export default function NewPropertyPage() {
                                         disabled={catalogs.loading}
                                         className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
                                     >
-                                        <option value="">{t("characteristics.orientationOptions.select")}</option>
+                                        <option value="">{t("characteristics.select")}</option>
                                         {catalogs.energyLabels.map((label) => (
                                             <option key={label.code} value={label.code}>
                                                 {label.label}

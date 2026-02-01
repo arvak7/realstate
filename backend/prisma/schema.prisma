@@ -42,10 +42,10 @@ model Property {
   status             String   @default("active") // 'active', 'paused', 'closed'
   isPrivate          Boolean  @default(false) @map("is_private")
   accessRequirements Json?    @map("access_requirements")
-  latitude           Float?
-  longitude          Float?
-  address            String?
-  privacyRadius      Int?     @default(0) @map("privacy_radius")
+  latitude           Float
+  longitude          Float
+  address            String
+  privacyRadius      Int      @default(500) @map("privacy_radius")
   createdAt          DateTime @default(now()) @map("created_at")
   updatedAt          DateTime @updatedAt @map("updated_at")
 

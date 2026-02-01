@@ -189,6 +189,7 @@
             "description": "Descripció",
             "descriptionPlaceholder": "Descriu l'immoble...",
             "type": "Tipus",
+            "select": "Selecciona...",
             "typeOptions": {
                 "pis": "Pis",
                 "casa": "Casa",
@@ -201,28 +202,18 @@
         },
         "location": {
             "title": "Ubicació",
-            "municipality": "Municipi",
-            "province": "Província",
-            "autonomousCommunity": "Comunitat Autònoma"
+            "address": "Adreça",
+            "privacyRadius": "Radi de privacitat",
+            "exactLocation": "Ubicació exacta",
+            "approximateLocation": "Ubicació aproximada",
+            "privacyHint": "Selecciona el radi en el que es mostrarà la teva propietat als cercadors. L'adreça exacta només serà visible per a tu."
         },
         "characteristics": {
             "title": "Característiques",
             "floors": "Plantes",
             "orientation": "Orientació",
-            "orientationOptions": {
-                "select": "Selecciona...",
-                "north": "Nord",
-                "south": "Sud",
-                "east": "Est",
-                "west": "Oest"
-            },
             "condition": "Estat",
-            "conditionOptions": {
-                "new": "Nou",
-                "almostNew": "Quasi nou",
-                "good": "Bon estat",
-                "toRenovate": "A reformar"
-            },
+            "select": "Selecciona...",
             "energyLabel": "Etiqueta Energètica",
             "elevator": "Ascensor",
             "furnished": "Amoblat"

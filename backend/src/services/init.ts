@@ -57,10 +57,8 @@ export async function initElasticsearch() {
                             location: {
                                 properties: {
                                     coordinates: { type: 'geo_point' },
-                                    autonomous_community: { type: 'keyword' },
-                                    province: { type: 'keyword' },
-                                    municipality: { type: 'keyword' },
-                                    address: { type: 'text' }
+                                    address: { type: 'text' },
+                                    privacyRadius: { type: 'integer' }
                                 }
                             },
                             characteristics: {
