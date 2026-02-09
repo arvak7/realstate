@@ -150,7 +150,11 @@
         "noTitle": "Sense títol",
         "noProperties": "No hi ha propietats disponibles en aquest moment.",
         "publishFirst": "Publica la primera propietat",
-        "loginToSee": "Inicia sessió per veure detalls"
+        "loginToSee": "Inicia sessió per veure detalls",
+        "gridView": "Vista graella",
+        "mapView": "Vista mapa",
+        "seeLocation": "Veure ubicació",
+        "close": "Tancar"
     },
     "propertyDetail": {
         "notFound": "Immoble no trobat",
@@ -174,7 +178,9 @@
         "emissions": "Emissions: {value} kg CO₂/m²/any",
         "imageAlt": "Imatge {number}",
         "contactInDevelopment": "Funcionalitat de contacte en desenvolupament",
-        "bedroomsCount": "{count} habitacions"
+        "bedroomsCount": "{count} habitacions",
+        "location": "Ubicació",
+        "approximateLocation": "Ubicació aproximada. L'adreça exacta només és visible per al propietari."
     },
     "newProperty": {
         "title": "Publicar Nou Immoble",
@@ -206,7 +212,8 @@
             "privacyRadius": "Radi de privacitat",
             "exactLocation": "Ubicació exacta",
             "approximateLocation": "Ubicació aproximada",
-            "privacyHint": "Selecciona el radi en el que es mostrarà la teva propietat als cercadors. L'adreça exacta només serà visible per a tu."
+            "privacyHint": "Selecciona el radi en el que es mostrarà la teva propietat als cercadors. L'adreça exacta només serà visible per a tu.",
+            "requiredError": "Has de seleccionar una ubicació al mapa"
         },
         "characteristics": {
             "title": "Característiques",

@@ -45,9 +45,11 @@ model Property {
   latitude           Float
   longitude          Float
   address            String
-  privacyRadius      Int      @default(500) @map("privacy_radius")
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
+  privacyRadius          Int      @default(500) @map("privacy_radius")
+  privacyCircleCenterLat Float?   @map("privacy_circle_center_lat")
+  privacyCircleCenterLon Float?   @map("privacy_circle_center_lon")
+  createdAt              DateTime @default(now()) @map("created_at")
+  updatedAt              DateTime @updatedAt @map("updated_at")
 
   owner                 User                   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   contacts              Contact[]

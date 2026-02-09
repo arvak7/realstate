@@ -122,10 +122,13 @@ async function main() {
         update: {},
         create: {
             id: 'demo-property-id',
-            ownerId: demoUser.id,
+            owner: { connect: { id: demoUser.id } },
             elasticsearchId: 'demo-es-id',
             status: 'active',
             isPrivate: false,
+            latitude: 41.3851,
+            longitude: 2.1734,
+            address: 'Passeig de Gràcia, 92, Barcelona',
         },
     });
     console.log(`Created sample property for ${demoUser.name}`);

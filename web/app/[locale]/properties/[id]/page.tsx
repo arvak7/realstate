@@ -1,11 +1,18 @@
 "use client";
 
 import { useState, useEffect, use } from "react";
+import dynamic from "next/dynamic";
 import { useSession } from "next-auth/react";
 import { useRouter, Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+
+// Dynamic import for Leaflet (SSR not supported)
+const PrivacyCircleMap = dynamic(
+    () => import("@/app/components/PrivacyCircleMap/PrivacyCircleMap"),
+    { ssr: false, loading: () => <div className="h-[300px] bg-gray-100 animate-pulse rounded-lg" /> }
+);
 
 interface PropertyDetail {
     id: string;
@@ -26,10 +33,13 @@ interface PropertyDetail {
         type: string;
     };
     location: {
-        municipality: string;
-        province: string;
-        autonomous_community: string;
         address?: string;
+        privacyCircle?: {
+            centerLat: number;
+            centerLon: number;
+            radius: number;
+        };
+        isApproximate?: boolean;
     };
     characteristics?: {
         floors?: number;
@@ -239,9 +249,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                             <h1 className="text-3xl md:text-4xl text-kindred-dark mb-3">
                                 {property.basic_info.title}
                             </h1>
-                            <p className="text-kindred-gray text-lg mb-6">
-                                {property.location.municipality}, {property.location.province}
-                            </p>
+                            {property.location?.address && (
+                                <p className="text-kindred-gray text-lg mb-6">
+                                    {property.location.address}
+                                </p>
+                            )}
 
                             <div className="flex flex-wrap items-center gap-6 pb-8 border-b border-gray-100">
                                 <span className="text-3xl font-semibold text-kindred-dark">
@@ -262,6 +274,32 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                                 {property.basic_info.description}
                             </p>
                         </div>
+
+                        {/* Location Map */}
+                        {property.location?.privacyCircle && (
+                            <div className="pt-8 border-t border-gray-100">
+                                <h2 className="text-xl font-semibold text-kindred-dark mb-4">
+                                    {t("location")}
+                                </h2>
+                                {property.location.isApproximate && (
+                                    <p className="text-sm text-kindred-gray mb-4 flex items-center gap-2">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        {t("approximateLocation")}
+                                    </p>
+                                )}
+                                {property.location.address && (
+                                    <p className="text-kindred-gray mb-4">{property.location.address}</p>
+                                )}
+                                <PrivacyCircleMap
+                                    centerLat={property.location.privacyCircle.centerLat}
+                                    centerLon={property.location.privacyCircle.centerLon}
+                                    radius={property.location.privacyCircle.radius}
+                                    height="350px"
+                                />
+                            </div>
+                        )}
 
                         {/* Characteristics */}
                         {property.characteristics && (

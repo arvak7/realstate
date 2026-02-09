@@ -1,6 +1,6 @@
 # MVP Checklist - Real Estate Platform
 
-> **Última actualització**: 2026-01-27
+> **Última actualització**: 2026-02-06
 > 
 > **Objectiu**: Definir el Mínim Producte Viable per validar la plataforma
 
@@ -34,29 +34,31 @@ Crear una plataforma funcional que permeti:
 ### 1. Infraestructura i Configuració
 
 #### 1.1 Base de Dades
-- [ ] Configurar PostgreSQL amb Prisma
-- [ ] Crear esquema de BD (users, properties, contacts, property_views, favorites)
-- [ ] Configurar migracions automàtiques
-- [ ] Crear seeds de dades de prova
+- [x] Configurar PostgreSQL amb Prisma
+- [x] Crear esquema de BD (users, properties, contacts, property_views, favorites)
+- [x] Configurar migracions automàtiques
+- [x] Crear seeds de dades de prova
 
 #### 1.2 Elasticsearch
-- [ ] Configurar Elasticsearch (Docker)
-- [ ] Crear índex `properties` amb mapping
+- [x] Configurar Elasticsearch (Docker)
+- [x] Crear índex `properties` amb mapping
 - [ ] Configurar analyzers per català/castellà
-- [ ] Implementar sincronització PostgreSQL → Elasticsearch
+- [x] Implementar sincronització PostgreSQL → Elasticsearch
 
 #### 1.3 Storage
-- [ ] Configurar MinIO (ja fet)
-- [ ] Crear bucket `realstate-properties`
-- [ ] Configurar políticas d'accés públic per imatges
+- [x] Configurar MinIO (ja fet)
+- [x] Crear bucket `realstate-properties`
+- [x] Configurar políticas d'accés públic per imatges
 - [ ] Implementar processament d'imatges (thumbnails, optimització)
 
 #### 1.4 Autenticació
-- [ ] Configurar NextAuth amb múltiples providers
-- [ ] Implementar provider de Google OAuth
+- [x] Configurar NextAuth amb múltiples providers
+- [x] Implementar provider de Google OAuth (via Zitadel broker)
 - [ ] Implementar provider de Facebook OAuth
-- [ ] Implementar provider de Credentials (email/password)
-- [ ] Configurar JWT i sessions
+- [x] Implementar Zitadel com a identity broker (setup automatitzat)
+- [x] Auto-provisió d'usuaris OAuth a la BD
+- [x] Configurar JWT i sessions
+- [x] Token refresh automàtic
 
 ---
 
@@ -65,27 +67,27 @@ Crear una plataforma funcional que permeti:
 #### 2.1 Autenticació
 - [ ] `POST /api/auth/register` - Registre amb email/password
 - [ ] `POST /api/auth/login` - Login amb email/password
-- [ ] `GET /api/auth/me` - Obtenir usuari autenticat
-- [ ] `PUT /api/auth/profile` - Actualitzar perfil
+- [x] `GET /api/auth/me` - Obtenir usuari autenticat (`GET /me`)
+- [x] `PUT /api/auth/profile` - Actualitzar perfil
 
 #### 2.2 Gestió d'Immobles
-- [ ] `POST /api/properties` - Crear immoble
-- [ ] `GET /api/properties` - Llistar immobles (amb filtres)
-- [ ] `GET /api/properties/:id` - Detall d'immoble
-- [ ] `PUT /api/properties/:id` - Actualitzar immoble (només propietari)
-- [ ] `DELETE /api/properties/:id` - Eliminar immoble (només propietari)
+- [x] `POST /api/properties` - Crear immoble
+- [x] `GET /api/properties` - Llistar immobles (amb filtres)
+- [x] `GET /api/properties/:id` - Detall d'immoble
+- [x] `PUT /api/properties/:id` - Actualitzar immoble (només propietari)
+- [x] `DELETE /api/properties/:id` - Eliminar immoble (només propietari)
 - [ ] `PATCH /api/properties/:id/status` - Canviar estat (actiu/pausat/tancat)
 
 #### 2.3 Gestió d'Imatges
-- [ ] `POST /api/properties/:id/images/upload-url` - Generar URL signada
+- [x] `POST /api/properties/:id/images/upload-url` - Generar URL signada (`POST /properties/upload-url`)
 - [ ] `POST /api/properties/:id/images` - Registrar imatge pujada
 - [ ] `DELETE /api/properties/:id/images/:imageId` - Eliminar imatge
 - [ ] `PATCH /api/properties/:id/images/reorder` - Reordenar imatges
 
 #### 2.4 Cerca i Filtres
-- [ ] `GET /api/search` - Cerca amb Elasticsearch
-- [ ] Filtres: preu, ubicació, m², habitacions, tipus
-- [ ] Cerca per text (títol, descripció)
+- [x] `GET /api/search` - Cerca amb Elasticsearch (via `GET /properties`)
+- [x] Filtres: preu, ubicació, m², habitacions, tipus
+- [x] Cerca per text (títol, descripció)
 - [ ] Ordenació: preu, data, relevància
 
 #### 2.5 Contacte

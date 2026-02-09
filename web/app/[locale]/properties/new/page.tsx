@@ -186,75 +186,99 @@ export default function NewPropertyPage() {
                                     <label className="block text-sm font-medium text-text-primary mb-2">
                                         {t("basicInfo.type")} *
                                     </label>
-                                    <select
-                                        required
-                                        value={formData.type}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, type: e.target.value })
-                                        }
-                                        disabled={catalogs.loading}
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
-                                    >
-                                        <option value="">{t("basicInfo.select")}</option>
-                                        {catalogs.propertyTypes.map((type) => (
-                                            <option key={type.code} value={type.code}>
-                                                {type.label}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-text-secondary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z" />
+                                            </svg>
+                                        </div>
+                                        <select
+                                            required
+                                            value={formData.type}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, type: e.target.value })
+                                            }
+                                            disabled={catalogs.loading}
+                                            className="w-full pl-11 pr-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
+                                        >
+                                            <option value="">{t("basicInfo.select")}</option>
+                                            {catalogs.propertyTypes.map((type) => (
+                                                <option key={type.code} value={type.code}>
+                                                    {type.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-text-primary mb-2">
                                         {t("basicInfo.price")} *
                                     </label>
-                                    <input
-                                        type="number"
-                                        required
-                                        min="0"
-                                        step="1000"
-                                        value={formData.price}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, price: e.target.value })
-                                        }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
-                                        placeholder="250000"
-                                    />
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                            <span className="text-text-secondary font-medium">&euro;</span>
+                                        </div>
+                                        <input
+                                            type="number"
+                                            required
+                                            min="0"
+                                            step="1000"
+                                            value={formData.price}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, price: e.target.value })
+                                            }
+                                            className="w-full pl-10 pr-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
+                                            placeholder="250.000"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-text-primary mb-2">
                                         {t("basicInfo.rooms")} *
                                     </label>
-                                    <input
-                                        type="number"
-                                        required
-                                        min="1"
-                                        value={formData.rooms}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, rooms: e.target.value })
-                                        }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
-                                        placeholder="3"
-                                    />
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-text-secondary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M7 8a3 3 0 100-6 3 3 0 000 6zM14.5 9a2.5 2.5 0 100-5 2.5 2.5 0 000 5zM1.615 16.428a1.224 1.224 0 01-.569-1.175 6.002 6.002 0 0111.908 0c.058.467-.172.92-.57 1.174A9.953 9.953 0 017 18a9.953 9.953 0 01-5.385-1.572zM14.5 16h-.106c.07-.297.088-.611.048-.933a7.47 7.47 0 00-1.588-3.755 4.502 4.502 0 015.874 2.636.818.818 0 01-.36.98A7.465 7.465 0 0114.5 16z" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="number"
+                                            required
+                                            min="1"
+                                            value={formData.rooms}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, rooms: e.target.value })
+                                            }
+                                            className="w-full pl-11 pr-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
+                                            placeholder="3"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-text-primary mb-2">
                                         {t("basicInfo.squareMeters")} *
                                     </label>
-                                    <input
-                                        type="number"
-                                        required
-                                        min="1"
-                                        step="0.1"
-                                        value={formData.square_meters}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, square_meters: e.target.value })
-                                        }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
-                                        placeholder="85"
-                                    />
+                                    <div className="relative">
+                                        <input
+                                            type="number"
+                                            required
+                                            min="1"
+                                            step="1"
+                                            value={formData.square_meters}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, square_meters: e.target.value })
+                                            }
+                                            className="w-full pl-4 pr-14 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
+                                            placeholder="85"
+                                        />
+                                        <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                            <span className="text-text-secondary font-medium">m&sup2;</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -281,83 +305,111 @@ export default function NewPropertyPage() {
                                     <label className="block text-sm font-medium text-text-primary mb-2">
                                         {t("characteristics.floors")}
                                     </label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        value={formData.floors}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, floors: e.target.value })
-                                        }
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
-                                        placeholder="1"
-                                    />
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-text-secondary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            value={formData.floors}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, floors: e.target.value })
+                                            }
+                                            className="w-full pl-11 pr-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
+                                            placeholder="1"
+                                        />
+                                    </div>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-text-primary mb-2">
                                         {t("characteristics.orientation")}
                                     </label>
-                                    <select
-                                        value={formData.orientation}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, orientation: e.target.value })
-                                        }
-                                        disabled={catalogs.loading}
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
-                                    >
-                                        <option value="">{t("characteristics.select")}</option>
-                                        {catalogs.orientations.map((orientation) => (
-                                            <option key={orientation.code} value={orientation.code}>
-                                                {orientation.label}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-text-secondary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <select
+                                            value={formData.orientation}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, orientation: e.target.value })
+                                            }
+                                            disabled={catalogs.loading}
+                                            className="w-full pl-11 pr-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
+                                        >
+                                            <option value="">{t("characteristics.select")}</option>
+                                            {catalogs.orientations.map((orientation) => (
+                                                <option key={orientation.code} value={orientation.code}>
+                                                    {orientation.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-text-primary mb-2">
                                         {t("characteristics.condition")}
                                     </label>
-                                    <select
-                                        value={formData.condition}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, condition: e.target.value })
-                                        }
-                                        disabled={catalogs.loading}
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
-                                    >
-                                        <option value="">{t("characteristics.select")}</option>
-                                        {catalogs.conditions.map((condition) => (
-                                            <option key={condition.code} value={condition.code}>
-                                                {condition.label}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-text-secondary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <select
+                                            value={formData.condition}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, condition: e.target.value })
+                                            }
+                                            disabled={catalogs.loading}
+                                            className="w-full pl-11 pr-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
+                                        >
+                                            <option value="">{t("characteristics.select")}</option>
+                                            {catalogs.conditions.map((condition) => (
+                                                <option key={condition.code} value={condition.code}>
+                                                    {condition.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
 
                                 <div>
                                     <label className="block text-sm font-medium text-text-primary mb-2">
                                         {t("characteristics.energyLabel")}
                                     </label>
-                                    <select
-                                        value={formData.energy_label}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, energy_label: e.target.value })
-                                        }
-                                        disabled={catalogs.loading}
-                                        className="w-full px-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
-                                    >
-                                        <option value="">{t("characteristics.select")}</option>
-                                        {catalogs.energyLabels.map((label) => (
-                                            <option key={label.code} value={label.code}>
-                                                {label.label}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <div className="relative">
+                                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-text-secondary">
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                                            </svg>
+                                        </div>
+                                        <select
+                                            value={formData.energy_label}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, energy_label: e.target.value })
+                                            }
+                                            disabled={catalogs.loading}
+                                            className="w-full pl-11 pr-4 py-3 border border-neutral-warm rounded-xl focus:ring-2 focus:ring-primary-dark focus:border-primary-dark disabled:opacity-50"
+                                        >
+                                            <option value="">{t("characteristics.select")}</option>
+                                            {catalogs.energyLabels.map((label) => (
+                                                <option key={label.code} value={label.code}>
+                                                    {label.label}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
                                 </div>
 
-                                <div className="flex items-center gap-6">
-                                    <label className="flex items-center gap-2 cursor-pointer">
+                                <div className="md:col-span-2 flex items-center gap-8 pt-2">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
                                         <input
                                             type="checkbox"
                                             checked={formData.has_elevator}
@@ -367,14 +419,14 @@ export default function NewPropertyPage() {
                                                     has_elevator: e.target.checked,
                                                 })
                                             }
-                                            className="w-4 h-4 text-primary-dark border-neutral-warm rounded focus:ring-primary-dark"
+                                            className="w-5 h-5 text-primary-dark border-neutral-warm rounded focus:ring-primary-dark"
                                         />
-                                        <span className="text-sm font-medium text-text-primary">
+                                        <span className="text-sm font-medium text-text-primary group-hover:text-primary-dark transition-colors">
                                             {t("characteristics.elevator")}
                                         </span>
                                     </label>
 
-                                    <label className="flex items-center gap-2 cursor-pointer">
+                                    <label className="flex items-center gap-3 cursor-pointer group">
                                         <input
                                             type="checkbox"
                                             checked={formData.is_furnished}
@@ -384,9 +436,9 @@ export default function NewPropertyPage() {
                                                     is_furnished: e.target.checked,
                                                 })
                                             }
-                                            className="w-4 h-4 text-primary-dark border-neutral-warm rounded focus:ring-primary-dark"
+                                            className="w-5 h-5 text-primary-dark border-neutral-warm rounded focus:ring-primary-dark"
                                         />
-                                        <span className="text-sm font-medium text-text-primary">
+                                        <span className="text-sm font-medium text-text-primary group-hover:text-primary-dark transition-colors">
                                             {t("characteristics.furnished")}
                                         </span>
                                     </label>

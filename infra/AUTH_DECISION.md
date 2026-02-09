@@ -143,6 +143,19 @@ effectiveProfileImage = profilePhotoUrl || oauthProfileImage || null
 
 ---
 
-**Data**: 2026-01-26 (actualitzat 2026-01-31)
-**Decisió**: Demo Login per POC, Zitadel/Auth0 per producció
-**Estat**: ✅ Implementat i funcionant
+**Data**: 2026-01-26 (actualitzat 2026-02-07)
+**Decisió**: Zitadel com a identity broker (Google via Zitadel) + Demo Login com a fallback dev
+**Estat**: ✅ Implementat - Zitadel configurat automàticament via `infra/setup-zitadel.sh`
+
+---
+
+## Actualització 2026-02-07: Migració a Zitadel com a Identity Broker
+
+El problema de la UI de Zitadel s'ha resolt configurant-lo via Management API (script automatitzat).
+
+### Canvis realitzats
+- `infra/setup-zitadel.sh` - Script automàtic que configura projecte, app OIDC, i Google IdP
+- `backend/src/middleware/auth.ts` - Auto-provisió d'usuaris al validar JWT (amb cache 5min)
+- `web/app/api/auth/[...nextauth]/route.ts` - ZitadelProvider com a únic provider OAuth + token refresh
+- `web/app/[locale]/auth/signin/page.tsx` - Botó únic "Iniciar Sessió" (Zitadel mostra Google al seu login)
+- Demo login es manté com a fallback per desenvolupament

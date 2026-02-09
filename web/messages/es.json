@@ -150,7 +150,11 @@
         "noTitle": "Sin título",
         "noProperties": "No hay propiedades disponibles en este momento.",
         "publishFirst": "Publica la primera propiedad",
-        "loginToSee": "Inicia sesión para ver detalles"
+        "loginToSee": "Inicia sesión para ver detalles",
+        "gridView": "Vista cuadrícula",
+        "mapView": "Vista mapa",
+        "seeLocation": "Ver ubicación",
+        "close": "Cerrar"
     },
     "propertyDetail": {
         "notFound": "Inmueble no encontrado",
@@ -174,7 +178,9 @@
         "emissions": "Emisiones: {value} kg CO₂/m²/año",
         "imageAlt": "Imagen {number}",
         "contactInDevelopment": "Funcionalidad de contacto en desarrollo",
-        "bedroomsCount": "{count} habitaciones"
+        "bedroomsCount": "{count} habitaciones",
+        "location": "Ubicación",
+        "approximateLocation": "Ubicación aproximada. La dirección exacta solo es visible para el propietario."
     },
     "newProperty": {
         "title": "Publicar Nuevo Inmueble",
@@ -200,7 +206,8 @@
             "privacyRadius": "Radio de privacidad",
             "exactLocation": "Ubicación exacta",
             "approximateLocation": "Ubicación aproximada",
-            "privacyHint": "Selecciona el radio en el que se mostrará tu propiedad a los buscadores. La dirección exacta solo será visible para ti."
+            "privacyHint": "Selecciona el radio en el que se mostrará tu propiedad a los buscadores. La dirección exacta solo será visible para ti.",
+            "requiredError": "Debes seleccionar una ubicación en el mapa"
         },
         "characteristics": {
             "title": "Características",

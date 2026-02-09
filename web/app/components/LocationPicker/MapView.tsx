@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { MapContainer, TileLayer, Marker, Circle, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -79,6 +79,38 @@ export default function MapView({
     onMapClick,
     onMarkerDrag,
 }: MapViewProps) {
+    // Generate a stable random seed based on marker position
+    // This ensures the offset stays consistent for the same location
+    // but changes when the marker moves
+    const offsetSeedRef = useRef<number>(Math.random());
+    const lastMarkerRef = useRef<string | null>(null);
+
+    // Calculate the privacy circle center with offset
+    // The circle is NOT centered on the real location to protect privacy
+    const privacyCircleCenter = useMemo(() => {
+        if (!markerPosition) return null;
+
+        const markerKey = `${markerPosition[0].toFixed(6)},${markerPosition[1].toFixed(6)}`;
+
+        // Generate new seed when marker position changes
+        if (lastMarkerRef.current !== markerKey) {
+            offsetSeedRef.current = Math.random();
+            lastMarkerRef.current = markerKey;
+        }
+
+        // Use seeded random for consistent offset
+        const seed = offsetSeedRef.current;
+        const angle = seed * 2 * Math.PI;
+        const minDistance = privacyRadius * 0.3;
+        const maxDistance = privacyRadius * 0.7;
+        const distance = minDistance + ((seed * 7919) % 1) * (maxDistance - minDistance);
+
+        const latOffset = (distance * Math.cos(angle)) / 111320;
+        const lngOffset = (distance * Math.sin(angle)) / (111320 * Math.cos(markerPosition[0] * Math.PI / 180));
+
+        return [markerPosition[0] + latOffset, markerPosition[1] + lngOffset] as [number, number];
+    }, [markerPosition, privacyRadius]);
+
     return (
         <div className="h-[400px] w-full rounded-xl overflow-hidden border border-neutral-warm">
             <MapContainer
@@ -94,14 +126,15 @@ export default function MapView({
                 <MapClickHandler onClick={onMapClick} />
                 <MapCenterUpdater center={center} />
 
-                {markerPosition && (
+                {markerPosition && privacyCircleCenter && (
                     <>
                         <DraggableMarker
                             position={markerPosition}
                             onDrag={onMarkerDrag}
                         />
+                        {/* Privacy circle is offset from the real location */}
                         <Circle
-                            center={markerPosition}
+                            center={privacyCircleCenter}
                             radius={privacyRadius}
                             pathOptions={{
                                 color: "#4a5568",

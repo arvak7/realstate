@@ -150,7 +150,11 @@
         "noTitle": "No title",
         "noProperties": "No properties available at this time.",
         "publishFirst": "Publish the first property",
-        "loginToSee": "Sign in to see details"
+        "loginToSee": "Sign in to see details",
+        "gridView": "Grid view",
+        "mapView": "Map view",
+        "seeLocation": "See location",
+        "close": "Close"
     },
     "propertyDetail": {
         "notFound": "Property not found",
@@ -174,7 +178,9 @@
         "emissions": "Emissions: {value} kg CO₂/m²/year",
         "imageAlt": "Image {number}",
         "contactInDevelopment": "Contact feature under development",
-        "bedroomsCount": "{count} bedrooms"
+        "bedroomsCount": "{count} bedrooms",
+        "location": "Location",
+        "approximateLocation": "Approximate location. The exact address is only visible to the owner."
     },
     "newProperty": {
         "title": "List New Property",
@@ -200,7 +206,8 @@
             "privacyRadius": "Privacy Radius",
             "exactLocation": "Exact Location",
             "approximateLocation": "Approximate Location",
-            "privacyHint": "Select the radius within which your property will be shown to searchers. The exact address will only be visible to you."
+            "privacyHint": "Select the radius within which your property will be shown to searchers. The exact address will only be visible to you.",
+            "requiredError": "You must select a location on the map"
         },
         "characteristics": {
             "title": "Characteristics",

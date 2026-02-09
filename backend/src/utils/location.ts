@@ -102,3 +102,40 @@ export function calculateDistance(
 
     return R * c;
 }
+
+/**
+ * Generates a deterministic privacy circle center for a property.
+ * The center is offset from the real location by 30-70% of the privacy radius,
+ * ensuring the real location is always inside the circle but not at the center.
+ *
+ * This function should be called once when creating/updating a property,
+ * and the result stored in the database for consistent display.
+ *
+ * @param lat - Real property latitude
+ * @param lon - Real property longitude
+ * @param radiusMeters - Privacy radius in meters
+ * @returns Privacy circle center coordinates
+ */
+export function generatePrivacyCircleCenter(
+    lat: number,
+    lon: number,
+    radiusMeters: number
+): { centerLat: number; centerLon: number } {
+    // Offset between 30-70% of the radius to ensure property is inside but not centered
+    const offsetFactor = 0.3 + Math.random() * 0.4;
+    const offsetDistance = radiusMeters * offsetFactor;
+    const angle = Math.random() * 2 * Math.PI;
+
+    // Earth's radius in meters - 1 degree latitude ≈ 111,320 meters
+    const metersPerDegreeLat = 111320;
+    const metersPerDegreeLon = metersPerDegreeLat * Math.cos(lat * Math.PI / 180);
+
+    // Calculate offset in degrees
+    const latOffset = (offsetDistance * Math.cos(angle)) / metersPerDegreeLat;
+    const lonOffset = (offsetDistance * Math.sin(angle)) / metersPerDegreeLon;
+
+    return {
+        centerLat: lat + latOffset,
+        centerLon: lon + lonOffset
+    };
+}

@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma, esClient, minioClient, MINIO_BUCKET } from '../config';
 import { AuthenticatedRequest } from '../middleware/auth';
-import { obfuscateLocation, sanitizeAddress, isValidCoordinates } from '../utils/location';
+import { sanitizeAddress, isValidCoordinates, generatePrivacyCircleCenter } from '../utils/location';
 import { validatePrivacyRadius, FEATURES } from '../config/features';
 
 export const getProperties = async (req: Request, res: Response) => {
@@ -42,7 +42,7 @@ export const getProperties = async (req: Request, res: Response) => {
             filter.push({ term: { 'basic_info.rooms': parseInt(rooms as string) } });
         }
 
-        // Geo distance search
+        // Geo distance search using privacy circle center
         if (lat && lon) {
             const latitude = parseFloat(lat as string);
             const longitude = parseFloat(lon as string);
@@ -50,7 +50,7 @@ export const getProperties = async (req: Request, res: Response) => {
                 filter.push({
                     geo_distance: {
                         distance: radius as string,
-                        'location.coordinates': {
+                        'location.privacy_circle_center': {
                             lat: latitude,
                             lon: longitude
                         }
@@ -80,9 +80,27 @@ export const getProperties = async (req: Request, res: Response) => {
 
         const properties = result.hits.hits.map(hit => {
             const source = hit._source as any;
+            const location = source?.location || {};
             return {
                 id: hit._id,
-                ...(source || {})
+                owner_id: source?.owner_id,
+                basic_info: source?.basic_info,
+                characteristics: source?.characteristics,
+                energy: source?.energy,
+                tags: source?.tags,
+                images: source?.images,
+                contact: source?.contact,
+                verifications: source?.verifications,
+                metadata: source?.metadata,
+                location: {
+                    address: location.address,
+                    privacyCircle: {
+                        centerLat: location.privacy_circle_center?.lat,
+                        centerLon: location.privacy_circle_center?.lon,
+                        radius: location.privacy_radius
+                    },
+                    isApproximate: true
+                }
             };
         });
 
@@ -157,31 +175,52 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
         const isOwner = req.auth?.payload?.sub === property.ownerId;
         const esSource = (esResult._source as any) || {};
 
-        // Prepare location response - obfuscate for non-owners
-        let locationResponse = esSource.location;
-        if (!isOwner && property.latitude && property.longitude) {
-            const obfuscated = obfuscateLocation(
-                property.latitude,
-                property.longitude,
-                property.privacyRadius
-            );
-            locationResponse = {
-                ...esSource.location,
-                coordinates: {
-                    lat: obfuscated.latitude,
-                    lon: obfuscated.longitude
-                },
-                address: sanitizeAddress(property.address),
+        // Prepare response - never expose exact coordinates to non-owners
+        const response: any = {
+            id: property.id,
+            ownerId: property.ownerId,
+            status: property.status,
+            isPrivate: property.isPrivate,
+            createdAt: property.createdAt,
+            updatedAt: property.updatedAt,
+            owner: property.owner,
+            basic_info: esSource.basic_info,
+            characteristics: esSource.characteristics,
+            energy: esSource.energy,
+            tags: esSource.tags,
+            images: esSource.images,
+            contact: esSource.contact,
+            verifications: esSource.verifications,
+            metadata: esSource.metadata
+        };
+
+        if (isOwner) {
+            // Owner can see exact location
+            response.location = {
+                latitude: property.latitude,
+                longitude: property.longitude,
+                address: property.address,
                 privacyRadius: property.privacyRadius,
+                privacyCircle: {
+                    centerLat: property.privacyCircleCenterLat,
+                    centerLon: property.privacyCircleCenterLon,
+                    radius: property.privacyRadius
+                }
+            };
+        } else {
+            // Non-owners only see privacy circle (approximate location)
+            response.location = {
+                address: sanitizeAddress(property.address),
+                privacyCircle: {
+                    centerLat: property.privacyCircleCenterLat,
+                    centerLon: property.privacyCircleCenterLon,
+                    radius: property.privacyRadius
+                },
                 isApproximate: true
             };
         }
 
-        res.json({
-            ...property,
-            ...esSource,
-            location: locationResponse
-        });
+        res.json(response);
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -210,22 +249,22 @@ export const createProperty = async (req: AuthenticatedRequest, res: Response) =
             return res.status(400).json({ error: 'Address is required.' });
         }
 
-        // Obfuscate location for Elasticsearch (public search)
-        const obfuscated = obfuscateLocation(latitude, longitude, privacyRadius);
+        // Generate persistent privacy circle center
+        const privacyCircle = generatePrivacyCircleCenter(latitude, longitude, privacyRadius);
 
-        // Create document in Elasticsearch with obfuscated coordinates
+        // Create document in Elasticsearch with privacy circle center (not real coords)
         const esResponse = await esClient.index({
             index: 'properties',
             document: {
                 owner_id: userId,
                 basic_info: propertyData.basic_info || {},
                 location: {
-                    coordinates: {
-                        lat: obfuscated.latitude,
-                        lon: obfuscated.longitude
+                    privacy_circle_center: {
+                        lat: privacyCircle.centerLat,
+                        lon: privacyCircle.centerLon
                     },
                     address: sanitizeAddress(address),
-                    privacyRadius: privacyRadius
+                    privacy_radius: privacyRadius
                 },
                 characteristics: propertyData.characteristics || {},
                 energy: propertyData.energy || {},
@@ -246,7 +285,7 @@ export const createProperty = async (req: AuthenticatedRequest, res: Response) =
             }
         });
 
-        // Create reference in PostgreSQL with exact coordinates
+        // Create reference in PostgreSQL with exact coordinates and privacy circle
         const property = await prisma.property.create({
             data: {
                 ownerId: userId,
@@ -255,6 +294,8 @@ export const createProperty = async (req: AuthenticatedRequest, res: Response) =
                 longitude: longitude,
                 address: address,
                 privacyRadius: privacyRadius,
+                privacyCircleCenterLat: privacyCircle.centerLat,
+                privacyCircleCenterLon: privacyCircle.centerLon,
                 isPrivate: propertyData.isPrivate || false,
                 accessRequirements: propertyData.accessRequirements || null
             }
@@ -291,20 +332,35 @@ export const updateProperty = async (req: AuthenticatedRequest, res: Response) =
         let longitude = property.longitude;
         let address = property.address;
         let privacyRadius = property.privacyRadius;
+        let privacyCircleCenterLat = property.privacyCircleCenterLat;
+        let privacyCircleCenterLon = property.privacyCircleCenterLon;
+        let locationChanged = false;
 
         if (propertyData.location) {
             const locationInput = propertyData.location;
             if (locationInput.latitude !== undefined) {
-                latitude = parseFloat(locationInput.latitude);
+                const newLat = parseFloat(locationInput.latitude);
+                if (newLat !== latitude) {
+                    latitude = newLat;
+                    locationChanged = true;
+                }
             }
             if (locationInput.longitude !== undefined) {
-                longitude = parseFloat(locationInput.longitude);
+                const newLon = parseFloat(locationInput.longitude);
+                if (newLon !== longitude) {
+                    longitude = newLon;
+                    locationChanged = true;
+                }
             }
             if (locationInput.address !== undefined) {
                 address = locationInput.address;
             }
             if (locationInput.privacyRadius !== undefined) {
-                privacyRadius = validatePrivacyRadius(locationInput.privacyRadius);
+                const newRadius = validatePrivacyRadius(locationInput.privacyRadius);
+                if (newRadius !== privacyRadius) {
+                    privacyRadius = newRadius;
+                    locationChanged = true;
+                }
             }
 
             if (!isValidCoordinates(latitude, longitude)) {
@@ -312,22 +368,26 @@ export const updateProperty = async (req: AuthenticatedRequest, res: Response) =
             }
         }
 
-        // Obfuscate location for Elasticsearch
-        const obfuscated = obfuscateLocation(latitude, longitude, privacyRadius);
+        // Regenerate privacy circle only if location or radius changed
+        if (locationChanged) {
+            const privacyCircle = generatePrivacyCircleCenter(latitude, longitude, privacyRadius);
+            privacyCircleCenterLat = privacyCircle.centerLat;
+            privacyCircleCenterLon = privacyCircle.centerLon;
+        }
 
-        // Update Elasticsearch
+        // Update Elasticsearch with privacy circle center
         await esClient.update({
             index: 'properties',
             id: property.elasticsearchId,
             doc: {
                 basic_info: propertyData.basic_info,
                 location: {
-                    coordinates: {
-                        lat: obfuscated.latitude,
-                        lon: obfuscated.longitude
+                    privacy_circle_center: {
+                        lat: privacyCircleCenterLat,
+                        lon: privacyCircleCenterLon
                     },
                     address: sanitizeAddress(address),
-                    privacyRadius: privacyRadius
+                    privacy_radius: privacyRadius
                 },
                 characteristics: propertyData.characteristics,
                 energy: propertyData.energy,
@@ -338,7 +398,7 @@ export const updateProperty = async (req: AuthenticatedRequest, res: Response) =
             }
         });
 
-        // Update PostgreSQL with exact coordinates
+        // Update PostgreSQL with exact coordinates and privacy circle
         const updatedProperty = await prisma.property.update({
             where: { id },
             data: {
@@ -346,6 +406,8 @@ export const updateProperty = async (req: AuthenticatedRequest, res: Response) =
                 longitude: longitude,
                 address: address,
                 privacyRadius: privacyRadius,
+                privacyCircleCenterLat: privacyCircleCenterLat,
+                privacyCircleCenterLon: privacyCircleCenterLon,
                 isPrivate: propertyData.isPrivate,
                 accessRequirements: propertyData.accessRequirements,
                 status: propertyData.status

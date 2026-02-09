@@ -7,6 +7,18 @@
 	admin off
 }
 
+# HTTP handler - Zitadel IdP callback (Google OAuth redirect lands here)
+http://localhost {
+	handle /idps/* {
+		reverse_proxy http://realstate-zitadel:8080 {
+			header_up Host {host}
+			header_up X-Real-IP {remote}
+			header_up X-Forwarded-For {remote}
+			header_up X-Forwarded-Proto {scheme}
+		}
+	}
+}
+
 # Web Frontend (Next.js) - Port 443 (default HTTPS)
 https://localhost {
 	tls /certs/localhost.pem /certs/localhost-key.pem

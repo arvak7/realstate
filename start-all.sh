@@ -105,7 +105,7 @@ echo -e "${BLUE}╚════════════════════�
 echo ""
 
 # Pas 1: Aturar serveis anteriors si existeixen
-print_message "Pas 1/6: Netejant serveis anteriors..."
+print_message "Pas 1/7: Netejant serveis anteriors..."
 cd "$INFRA_DIR"
 
 # Aturar processos de Node.js anteriors
@@ -122,7 +122,7 @@ fi
 print_success "Neteja completada"
 
 # Pas 2: Arrencar serveis Docker
-print_message "Pas 2/6: Arrencant serveis Docker..."
+print_message "Pas 2/7: Arrencant serveis Docker..."
 cd "$INFRA_DIR"
 
 $DOCKER_COMPOSE up -d
@@ -130,7 +130,7 @@ $DOCKER_COMPOSE up -d
 print_success "Serveis Docker arrencats"
 
 # Pas 3: Esperar que els serveis estiguin saludables
-print_message "Pas 3/6: Esperant que els serveis estiguin saludables..."
+print_message "Pas 3/7: Esperant que els serveis estiguin saludables..."
 
 wait_for_service "postgres"
 wait_for_service "redis"
@@ -141,8 +141,24 @@ wait_for_service "caddy"
 
 print_success "Tots els serveis Docker estan saludables"
 
+# Pas 3.5: Configure Zitadel (one-time only)
+if [ -f "$INFRA_DIR/.zitadel-configured" ]; then
+    print_success "Zitadel ja configurat (saltant setup)"
+elif [ -f "$INFRA_DIR/setup-zitadel.sh" ]; then
+    print_message "Pas 3.5/7: Configurant Zitadel..."
+    bash "$INFRA_DIR/setup-zitadel.sh" || print_warning "Zitadel setup failed (non-blocking). Manual configuration may be needed."
+    print_success "Configuració de Zitadel completada"
+    # Restart login container to pick up newly created PAT
+    print_message "Reiniciant Zitadel Login V2..."
+    cd "$INFRA_DIR"
+    $DOCKER_COMPOSE restart zitadel-login 2>/dev/null || true
+    print_success "Zitadel Login V2 reiniciat"
+else
+    print_warning "setup-zitadel.sh not found, skipping Zitadel configuration"
+fi
+
 # Pas 4: Aplicar migracions de Prisma
-print_message "Pas 4/6: Aplicant migracions de Prisma..."
+print_message "Pas 4/7: Aplicant migracions de Prisma..."
 cd "$BACKEND_DIR"
 
 # Comprovar si existeix .env
@@ -169,7 +185,7 @@ npm run prisma:migrate -- --name init || print_warning "Les migracions ja poden 
 print_success "Migracions de Prisma aplicades"
 
 # Pas 5: Arrencar el backend
-print_message "Pas 5/6: Arrencant el backend..."
+print_message "Pas 5/7: Arrencant el backend..."
 cd "$BACKEND_DIR"
 
 # Comprovar si el port 3002 està lliure
@@ -194,7 +210,7 @@ else
 fi
 
 # Pas 6: Arrencar el frontend
-print_message "Pas 6/6: Arrencant el frontend..."
+print_message "Pas 6/7: Arrencant el frontend..."
 cd "$WEB_DIR"
 
 # Comprovar si existeix .env.local

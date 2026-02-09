@@ -56,9 +56,9 @@ export async function initElasticsearch() {
                             },
                             location: {
                                 properties: {
-                                    coordinates: { type: 'geo_point' },
+                                    privacy_circle_center: { type: 'geo_point' },
                                     address: { type: 'text' },
-                                    privacyRadius: { type: 'integer' }
+                                    privacy_radius: { type: 'integer' }
                                 }
                             },
                             characteristics: {

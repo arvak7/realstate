@@ -1,0 +1,48 @@
+# Dependencies
+**/node_modules/
+
+# Build outputs
+**/.next/
+**/dist/
+**/build/
+**/.turbo/
+
+# Flutter SDK (very large)
+tools/
+
+# Git
+.git/
+
+# Lock files (not useful for context)
+**/package-lock.json
+**/yarn.lock
+**/pnpm-lock.yaml
+**/*.lock
+
+# Docker data volumes
+infra/data/
+
+# Cache directories
+**/.cache/
+**/.eslintcache
+
+# Generated files
+**/generated/
+**/*.generated.*
+
+# Prisma migrations (usually not needed for context)
+backend/prisma/migrations/
+
+# Test coverage
+**/coverage/
+
+# IDE
+.idea/
+.vscode/
+
+# Playwright cache
+.playwright-mcp/
+
+# Temporary files
+**/*.log
+**/*.tmp

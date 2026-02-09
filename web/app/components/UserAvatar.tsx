@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 interface UserAvatarProps {
     photoUrl?: string | null;
     name?: string | null;
@@ -14,6 +16,8 @@ const sizeClasses = {
 };
 
 export default function UserAvatar({ photoUrl, name, size = 'md', className = '' }: UserAvatarProps) {
+    const [imgError, setImgError] = useState(false);
+
     // Get initials from name
     const getInitials = (name: string | null | undefined): string => {
         if (!name) return '?';
@@ -39,12 +43,13 @@ export default function UserAvatar({ photoUrl, name, size = 'md', className = ''
         return colors[index];
     };
 
-    if (photoUrl) {
+    if (photoUrl && !imgError) {
         return (
             <img
                 src={photoUrl}
                 alt={name || 'User'}
                 className={`${sizeClasses[size]} rounded-full object-cover ${className}`}
+                onError={() => setImgError(true)}
             />
         );
     }

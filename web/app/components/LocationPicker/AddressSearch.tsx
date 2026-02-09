@@ -25,12 +25,16 @@ export default function AddressSearch({ onSelect, placeholder = "Cerca una adre√
                 q: searchQuery,
                 format: "json",
                 addressdetails: "1",
-                limit: "5",
+                limit: "10", // Increased from 5 to get more results
+                countrycodes: "es", // Bias towards Spain for better local results
+                dedupe: "1", // Remove duplicate results
+                namedetails: "1", // Include name details for better matching
             });
 
             const response = await fetch(`${NOMINATIM_URL}?${params.toString()}`, {
                 headers: {
                     "Accept-Language": "ca,es,en",
+                    "User-Agent": "RealEstateApp/1.0", // Nominatim requires a user agent
                 },
             });
 
@@ -84,7 +88,7 @@ export default function AddressSearch({ onSelect, placeholder = "Cerca una adre√
     }, []);
 
     return (
-        <div ref={containerRef} className="relative">
+        <div ref={containerRef} className="relative z-[1000]">
             <div className="relative">
                 <input
                     type="text"
@@ -115,7 +119,7 @@ export default function AddressSearch({ onSelect, placeholder = "Cerca una adre√
             </div>
 
             {showDropdown && results.length > 0 && (
-                <ul className="absolute z-50 w-full mt-1 bg-white border border-neutral-warm rounded-xl shadow-lg max-h-60 overflow-auto">
+                <ul className="absolute z-[1001] w-full mt-1 bg-white border border-neutral-warm rounded-xl shadow-lg max-h-60 overflow-auto">
                     {results.map((result, index) => (
                         <li key={index}>
                             <button
