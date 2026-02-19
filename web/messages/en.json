@@ -21,7 +21,9 @@
         "signOut": "Sign Out",
         "exploreProperties": "Explore Properties",
         "openMenu": "Open menu",
-        "toggleMenu": "Toggle menu"
+        "toggleMenu": "Toggle menu",
+        "dashboard": "My properties",
+        "profile": "Profile"
     },
     "home": {
         "hero": {
@@ -251,6 +253,34 @@
         "setAsMain": "Set as main",
         "imageAlt": "Image {number}"
     },
+    "privatePhotos": {
+        "title": "Private photos",
+        "imageCount": "{count} {count, plural, one {photo} other {photos}}",
+        "clickToUnlock": "Click to unlock",
+        "badge": "Private",
+        "accessGranted": "Access granted",
+        "ghostAlt": "Private photos - restricted access"
+    },
+    "clauses": {
+        "selectorTitle": "Photo access requirements",
+        "selectorDescription": "Select which requirements buyers must meet to view your property photos.",
+        "minRequired": "You must select at least one requirement",
+        "confirm": "Confirm",
+        "requirementsTitle": "Requirements to view photos",
+        "requirementsDescription": "To view this property's photos, you must meet the following requirements:",
+        "notAllMet": "Not all requirements are met",
+        "viewPhotos": "View photos",
+        "requesting": "Requesting...",
+        "close": "Close",
+        "identityVerification": {
+            "name": "Identity verification",
+            "description": "You must verify your identity"
+        },
+        "buyerSellerMatch": {
+            "name": "Contact accepted",
+            "description": "The owner must accept your contact request"
+        }
+    },
     "auth": {
         "welcome": "Welcome",
         "loginSubtitle": "Sign in to access your account",
@@ -326,6 +356,53 @@
             "G": "G",
             "en_tramit": "Pending",
             "exempt": "Exempt"
+        }
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "tabs": {
+            "properties": "My properties",
+            "contacts": "Contact requests"
+        },
+        "properties": {
+            "empty": "You haven't published any properties yet.",
+            "publishFirst": "Publish your first property",
+            "status": {
+                "active": "Active",
+                "paused": "Paused",
+                "closed": "Closed"
+            },
+            "views": "{count} views",
+            "contacts": "{count} contacts",
+            "favorites": "{count} favorites",
+            "edit": "Edit",
+            "delete": "Delete",
+            "confirmDelete": "Are you sure you want to delete this property?",
+            "deleted": "Property deleted successfully",
+            "deleteError": "Error deleting property",
+            "privateLabel": "Private",
+            "accessRequests": "Access requests",
+            "accessRequestsPending": "{count} {count, plural, one {pending} other {pending}}",
+            "accessRequestsEmpty": "No pending requests"
+        },
+        "contacts": {
+            "empty": "You don't have any contact requests.",
+            "pending": "Pending",
+            "accepted": "Accepted",
+            "rejected": "Rejected",
+            "accept": "Accept",
+            "reject": "Reject",
+            "filterAll": "All",
+            "filterPending": "Pending",
+            "filterAccepted": "Accepted",
+            "filterRejected": "Rejected",
+            "buyer": "Buyer",
+            "property": "Property",
+            "message": "Message",
+            "date": "Date",
+            "noMessage": "No message",
+            "statusUpdated": "Status updated successfully",
+            "statusError": "Error updating status"
         }
     },
     "metadata": {

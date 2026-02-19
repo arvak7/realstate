@@ -21,7 +21,9 @@
         "signOut": "Cerrar Sesión",
         "exploreProperties": "Explorar Inmuebles",
         "openMenu": "Abrir menú",
-        "toggleMenu": "Alternar menú"
+        "toggleMenu": "Alternar menú",
+        "dashboard": "Mis inmuebles",
+        "profile": "Perfil"
     },
     "home": {
         "hero": {
@@ -251,6 +253,34 @@
         "setAsMain": "Establecer como principal",
         "imageAlt": "Imagen {number}"
     },
+    "privatePhotos": {
+        "title": "Fotos privadas",
+        "imageCount": "{count} {count, plural, one {foto} other {fotos}}",
+        "clickToUnlock": "Haz clic para desbloquear",
+        "badge": "Privado",
+        "accessGranted": "Acceso concedido",
+        "ghostAlt": "Fotos privadas - acceso restringido"
+    },
+    "clauses": {
+        "selectorTitle": "Requisitos de acceso a las fotos",
+        "selectorDescription": "Selecciona qué requisitos deberán cumplir los compradores para ver las fotos de tu inmueble.",
+        "minRequired": "Debes seleccionar al menos un requisito",
+        "confirm": "Confirmar",
+        "requirementsTitle": "Requisitos para ver las fotos",
+        "requirementsDescription": "Para ver las fotos de este inmueble, debes cumplir los siguientes requisitos:",
+        "notAllMet": "No cumples todos los requisitos",
+        "viewPhotos": "Ver fotos",
+        "requesting": "Solicitando...",
+        "close": "Cerrar",
+        "identityVerification": {
+            "name": "Verificación de identidad",
+            "description": "Debes verificar tu identidad"
+        },
+        "buyerSellerMatch": {
+            "name": "Contacto aceptado",
+            "description": "El propietario debe aceptar tu solicitud de contacto"
+        }
+    },
     "auth": {
         "welcome": "Bienvenido/a",
         "loginSubtitle": "Inicia sesión para acceder a tu cuenta",
@@ -326,6 +356,53 @@
             "G": "G",
             "en_tramit": "En trámite",
             "exempt": "Exento"
+        }
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "tabs": {
+            "properties": "Mis inmuebles",
+            "contacts": "Solicitudes de contacto"
+        },
+        "properties": {
+            "empty": "Aún no has publicado ningún inmueble.",
+            "publishFirst": "Publicar el primer inmueble",
+            "status": {
+                "active": "Activo",
+                "paused": "Pausado",
+                "closed": "Cerrado"
+            },
+            "views": "{count} visitas",
+            "contacts": "{count} contactos",
+            "favorites": "{count} favoritos",
+            "edit": "Editar",
+            "delete": "Eliminar",
+            "confirmDelete": "¿Seguro que quieres eliminar este inmueble?",
+            "deleted": "Inmueble eliminado correctamente",
+            "deleteError": "Error eliminando el inmueble",
+            "privateLabel": "Privado",
+            "accessRequests": "Peticiones de acceso",
+            "accessRequestsPending": "{count} {count, plural, one {pendiente} other {pendientes}}",
+            "accessRequestsEmpty": "Sin peticiones pendientes"
+        },
+        "contacts": {
+            "empty": "No tienes ninguna solicitud de contacto.",
+            "pending": "Pendiente",
+            "accepted": "Aceptada",
+            "rejected": "Rechazada",
+            "accept": "Aceptar",
+            "reject": "Rechazar",
+            "filterAll": "Todas",
+            "filterPending": "Pendientes",
+            "filterAccepted": "Aceptadas",
+            "filterRejected": "Rechazadas",
+            "buyer": "Comprador",
+            "property": "Inmueble",
+            "message": "Mensaje",
+            "date": "Fecha",
+            "noMessage": "Sin mensaje",
+            "statusUpdated": "Estado actualizado correctamente",
+            "statusError": "Error actualizando el estado"
         }
     },
     "metadata": {

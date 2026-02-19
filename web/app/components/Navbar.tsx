@@ -2,83 +2,127 @@
 
 import Link from "next/link";
 import { useSession, signOut, signIn } from "next-auth/react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 
 export default function Navbar() {
     const { data: session } = useSession();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const userMenuRef = useRef<HTMLDivElement>(null);
+    const t = useTranslations("nav");
+    const tCommon = useTranslations("common");
+
+    // Close user menu on click outside
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+                setUserMenuOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
 
     return (
         <nav className="bg-white border-b border-gray-100">
             <div className="max-w-7xl mx-auto px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
-                    {/* Logo - Kindred style bold text */}
+                    {/* Logo */}
                     <Link href="/" className="flex items-center">
                         <span className="text-2xl font-bold text-kindred-dark tracking-tight">
-                            Immobles
+                            {tCommon("brand")}
                         </span>
                     </Link>
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-4">
-                        {session ? (
-                            <>
-                                <Link
-                                    href="/properties"
-                                    className="text-kindred-gray hover:text-kindred-dark font-medium transition-colors duration-200 px-3 py-2"
-                                >
-                                    Explorar
-                                </Link>
-                                <Link
-                                    href="/properties/new"
-                                    className="text-kindred-gray hover:text-kindred-dark font-medium transition-colors duration-200 px-3 py-2"
-                                >
-                                    Publicar
-                                </Link>
-                                <span className="text-sm text-kindred-gray px-3">
-                                    {session.user?.email}
-                                </span>
-                                <button
-                                    onClick={() => signOut()}
-                                    className="btn-secondary text-sm py-2 px-5"
-                                >
-                                    Tancar Sessió
-                                </button>
-                            </>
-                        ) : (
+                        <Link
+                            href="/properties"
+                            className="text-kindred-gray hover:text-kindred-dark font-medium transition-colors duration-200 px-3 py-2"
+                        >
+                            {t("explore")}
+                        </Link>
+                        {session && (
+                            <Link
+                                href="/properties/new"
+                                className="text-kindred-gray hover:text-kindred-dark font-medium transition-colors duration-200 px-3 py-2"
+                            >
+                                {t("publish")}
+                            </Link>
+                        )}
+                        {!session && (
                             <>
                                 <button
                                     onClick={() => signIn()}
                                     className="btn-secondary text-sm py-2 px-5"
                                 >
-                                    Iniciar Sessió
+                                    {t("signIn")}
                                 </button>
-                                <Link
-                                    href="/properties"
-                                    className="btn-primary text-sm py-2 px-5"
-                                >
-                                    Explorar Immobles
+                                <Link href="/properties" className="btn-primary text-sm py-2 px-5">
+                                    {t("exploreProperties")}
                                 </Link>
                             </>
                         )}
 
-                        {/* Hamburger menu button */}
-                        <button
-                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="p-2 hover:bg-neutral-warm rounded-lg transition-colors ml-2"
-                            aria-label="Open menu"
-                        >
-                            <svg className="w-6 h-6 text-kindred-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
-                            </svg>
-                        </button>
+                        {/* User menu (hamburger) */}
+                        {session && (
+                            <div className="relative" ref={userMenuRef}>
+                                <button
+                                    onClick={() => setUserMenuOpen(!userMenuOpen)}
+                                    className="p-2 hover:bg-neutral-warm rounded-lg transition-colors ml-2"
+                                    aria-label={t("openMenu")}
+                                >
+                                    <svg className="w-6 h-6 text-kindred-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 12h16M4 18h16" />
+                                    </svg>
+                                </button>
+
+                                {/* Dropdown */}
+                                {userMenuOpen && (
+                                    <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-2 z-50">
+                                        <div className="px-4 py-2 border-b border-gray-100">
+                                            <p className="text-sm font-medium text-kindred-dark truncate">
+                                                {session.user?.name || session.user?.email}
+                                            </p>
+                                            <p className="text-xs text-kindred-gray truncate">{session.user?.email}</p>
+                                        </div>
+                                        <Link
+                                            href="/dashboard"
+                                            className="block px-4 py-2.5 text-sm text-kindred-dark hover:bg-neutral-warm transition-colors"
+                                            onClick={() => setUserMenuOpen(false)}
+                                        >
+                                            {t("dashboard")}
+                                        </Link>
+                                        <Link
+                                            href="/profile"
+                                            className="block px-4 py-2.5 text-sm text-kindred-dark hover:bg-neutral-warm transition-colors"
+                                            onClick={() => setUserMenuOpen(false)}
+                                        >
+                                            {t("profile")}
+                                        </Link>
+                                        <div className="border-t border-gray-100 mt-1 pt-1">
+                                            <button
+                                                onClick={() => {
+                                                    signOut();
+                                                    setUserMenuOpen(false);
+                                                }}
+                                                className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                                            >
+                                                {t("signOut")}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {/* Mobile menu button */}
                     <button
                         onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
                         className="md:hidden p-2 hover:bg-neutral-warm rounded-lg transition-colors"
-                        aria-label="Toggle menu"
+                        aria-label={t("toggleMenu")}
                     >
                         <svg className="w-6 h-6 text-kindred-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             {mobileMenuOpen ? (
@@ -99,7 +143,7 @@ export default function Navbar() {
                                 className="text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
                                 onClick={() => setMobileMenuOpen(false)}
                             >
-                                Explorar Immobles
+                                {t("exploreProperties")}
                             </Link>
                             {session ? (
                                 <>
@@ -108,7 +152,21 @@ export default function Navbar() {
                                         className="text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
                                         onClick={() => setMobileMenuOpen(false)}
                                     >
-                                        Publicar
+                                        {t("publish")}
+                                    </Link>
+                                    <Link
+                                        href="/dashboard"
+                                        className="text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        {t("dashboard")}
+                                    </Link>
+                                    <Link
+                                        href="/profile"
+                                        className="text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
+                                        onClick={() => setMobileMenuOpen(false)}
+                                    >
+                                        {t("profile")}
                                     </Link>
                                     <div className="px-4 py-2 text-sm text-kindred-gray">
                                         {session.user?.email}
@@ -118,9 +176,9 @@ export default function Navbar() {
                                             signOut();
                                             setMobileMenuOpen(false);
                                         }}
-                                        className="text-left text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
+                                        className="text-left text-red-600 font-medium py-3 px-4 hover:bg-red-50 rounded-lg transition-colors"
                                     >
-                                        Tancar Sessió
+                                        {t("signOut")}
                                     </button>
                                 </>
                             ) : (
@@ -131,7 +189,7 @@ export default function Navbar() {
                                     }}
                                     className="text-left text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
                                 >
-                                    Iniciar Sessió
+                                    {t("signIn")}
                                 </button>
                             )}
                         </div>

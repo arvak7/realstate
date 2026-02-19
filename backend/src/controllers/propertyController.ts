@@ -3,8 +3,9 @@ import { prisma, esClient, minioClient, MINIO_BUCKET } from '../config';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { sanitizeAddress, isValidCoordinates, generatePrivacyCircleCenter } from '../utils/location';
 import { validatePrivacyRadius, FEATURES } from '../config/features';
+import { getClause, getAllClauses, ClauseCheckContext } from '../clauses';
 
-export const getProperties = async (req: Request, res: Response) => {
+export const getProperties = async (req: AuthenticatedRequest, res: Response) => {
     try {
         const {
             page = 1,
@@ -78,9 +79,13 @@ export const getProperties = async (req: Request, res: Response) => {
             }
         });
 
+        const currentUserId = req.auth?.payload?.sub;
         const properties = result.hits.hits.map(hit => {
             const source = hit._source as any;
             const location = source?.location || {};
+            // Check if property is private and strip image URLs (owner can always see)
+            const isPrivate = source?.is_private || false;
+            const isOwner = currentUserId && source?.owner_id === currentUserId;
             return {
                 id: hit._id,
                 owner_id: source?.owner_id,
@@ -88,10 +93,11 @@ export const getProperties = async (req: Request, res: Response) => {
                 characteristics: source?.characteristics,
                 energy: source?.energy,
                 tags: source?.tags,
-                images: source?.images,
+                images: (isPrivate && !isOwner) ? (source?.images || []).map(() => ({ url: null, is_main: false })) : source?.images,
                 contact: source?.contact,
                 verifications: source?.verifications,
                 metadata: source?.metadata,
+                is_private: isPrivate,
                 location: {
                     address: location.address,
                     privacyCircle: {
@@ -175,6 +181,35 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
         const isOwner = req.auth?.payload?.sub === property.ownerId;
         const esSource = (esResult._source as any) || {};
 
+        // Photo access logic for private properties
+        let photoAccessGranted = isOwner;
+        let photoAccessInfo: any = undefined;
+
+        if (property.isPrivate && !isOwner) {
+            const userId = req.auth?.payload?.sub;
+            if (userId) {
+                const access = await prisma.propertyPhotoAccess.findUnique({
+                    where: {
+                        propertyId_userId: {
+                            propertyId: property.id,
+                            userId: userId,
+                        },
+                    },
+                });
+                photoAccessGranted = !!access;
+            }
+
+            if (!photoAccessGranted) {
+                const requirements = (property.accessRequirements as any)?.clauses || [];
+                photoAccessInfo = {
+                    granted: false,
+                    requiredClauses: requirements,
+                };
+            } else {
+                photoAccessInfo = { granted: true };
+            }
+        }
+
         // Prepare response - never expose exact coordinates to non-owners
         const response: any = {
             id: property.id,
@@ -188,11 +223,18 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
             characteristics: esSource.characteristics,
             energy: esSource.energy,
             tags: esSource.tags,
-            images: esSource.images,
+            images: property.isPrivate && !photoAccessGranted
+                ? (esSource.images || []).map(() => ({ url: null, is_main: false }))
+                : esSource.images,
             contact: esSource.contact,
             verifications: esSource.verifications,
             metadata: esSource.metadata
         };
+
+        // Add photo access info for private properties
+        if (property.isPrivate) {
+            response.photoAccess = photoAccessInfo;
+        }
 
         if (isOwner) {
             // Owner can see exact location
@@ -234,12 +276,10 @@ export const createProperty = async (req: AuthenticatedRequest, res: Response) =
 
         // Extract and validate location data
         const locationInput = propertyData.location || {};
-        console.log('DEBUG: locationInput', JSON.stringify(locationInput));
         const latitude = parseFloat(locationInput.latitude);
         const longitude = parseFloat(locationInput.longitude);
         const address = locationInput.address || '';
         const privacyRadius = validatePrivacyRadius(locationInput.privacyRadius);
-        console.log('DEBUG: Parsed values', { latitude, longitude, address, privacyRadius });
 
         if (!isValidCoordinates(latitude, longitude)) {
             return res.status(400).json({ error: 'Invalid coordinates. Latitude must be -90 to 90, longitude -180 to 180.' });
@@ -253,6 +293,7 @@ export const createProperty = async (req: AuthenticatedRequest, res: Response) =
         const privacyCircle = generatePrivacyCircleCenter(latitude, longitude, privacyRadius);
 
         // Create document in Elasticsearch with privacy circle center (not real coords)
+        const isPrivate = propertyData.isPrivate || false;
         const esResponse = await esClient.index({
             index: 'properties',
             document: {
@@ -271,6 +312,7 @@ export const createProperty = async (req: AuthenticatedRequest, res: Response) =
                 tags: propertyData.tags || [],
                 images: propertyData.images || [],
                 contact: propertyData.contact || {},
+                is_private: isPrivate,
                 verifications: {
                     property_verified: false,
                     owner_identity_verified: false,
@@ -296,7 +338,7 @@ export const createProperty = async (req: AuthenticatedRequest, res: Response) =
                 privacyRadius: privacyRadius,
                 privacyCircleCenterLat: privacyCircle.centerLat,
                 privacyCircleCenterLon: privacyCircle.centerLon,
-                isPrivate: propertyData.isPrivate || false,
+                isPrivate: isPrivate,
                 accessRequirements: propertyData.accessRequirements || null
             }
         });
@@ -394,6 +436,7 @@ export const updateProperty = async (req: AuthenticatedRequest, res: Response) =
                 tags: propertyData.tags,
                 images: propertyData.images,
                 contact: propertyData.contact,
+                is_private: propertyData.isPrivate ?? property.isPrivate,
                 'metadata.updated_at': new Date().toISOString()
             }
         });
@@ -496,6 +539,195 @@ export const getMyProperties = async (req: AuthenticatedRequest, res: Response) 
         });
 
         res.json(properties);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// Get photo access status for a property
+export const getPhotoAccess = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = req.auth!.payload.sub;
+
+        const property = await prisma.property.findFirst({
+            where: { OR: [{ id }, { elasticsearchId: id }] },
+        });
+
+        if (!property) {
+            return res.status(404).json({ error: 'Property not found' });
+        }
+
+        if (!property.isPrivate) {
+            return res.json({ granted: true, clauses: [] });
+        }
+
+        // Check if already granted
+        const access = await prisma.propertyPhotoAccess.findUnique({
+            where: {
+                propertyId_userId: {
+                    propertyId: property.id,
+                    userId,
+                },
+            },
+        });
+
+        if (access) {
+            return res.json({ granted: true, clauses: [] });
+        }
+
+        // Check each clause
+        const requirements = (property.accessRequirements as any)?.clauses || [];
+        const clauseResults = await Promise.all(
+            requirements.map(async (clauseId: string) => {
+                const clause = getClause(clauseId);
+                if (!clause) return { id: clauseId, satisfied: false };
+                const ctx: ClauseCheckContext = {
+                    prisma,
+                    buyerId: userId,
+                    sellerId: property.ownerId,
+                    propertyId: property.id,
+                };
+                const satisfied = await clause.checkSatisfied(ctx);
+                return { id: clauseId, satisfied };
+            })
+        );
+
+        res.json({
+            granted: false,
+            clauses: clauseResults,
+        });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// Request photo access (re-verify clauses, grant if all satisfied)
+export const requestPhotoAccess = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const userId = req.auth!.payload.sub;
+
+        const property = await prisma.property.findFirst({
+            where: { OR: [{ id }, { elasticsearchId: id }] },
+            include: { owner: true },
+        });
+
+        if (!property) {
+            return res.status(404).json({ error: 'Property not found' });
+        }
+
+        if (!property.isPrivate) {
+            return res.json({ granted: true });
+        }
+
+        // Check if already granted
+        const existingAccess = await prisma.propertyPhotoAccess.findUnique({
+            where: {
+                propertyId_userId: {
+                    propertyId: property.id,
+                    userId,
+                },
+            },
+        });
+
+        if (existingAccess) {
+            // Already granted, return images
+            const esResult = await esClient.get({ index: 'properties', id: property.elasticsearchId });
+            return res.json({ granted: true, images: (esResult._source as any)?.images || [] });
+        }
+
+        // Verify all clauses
+        const requirements = (property.accessRequirements as any)?.clauses || [];
+        const clauseResults = await Promise.all(
+            requirements.map(async (clauseId: string) => {
+                const clause = getClause(clauseId);
+                if (!clause) return { id: clauseId, satisfied: false };
+                const ctx: ClauseCheckContext = {
+                    prisma,
+                    buyerId: userId,
+                    sellerId: property.ownerId,
+                    propertyId: property.id,
+                };
+                const satisfied = await clause.checkSatisfied(ctx);
+                return { id: clauseId, satisfied };
+            })
+        );
+
+        const allSatisfied = clauseResults.every((c) => c.satisfied);
+
+        if (!allSatisfied) {
+            return res.status(403).json({
+                granted: false,
+                clauses: clauseResults,
+                message: 'Not all requirements are met',
+            });
+        }
+
+        // Grant access
+        await prisma.propertyPhotoAccess.create({
+            data: {
+                propertyId: property.id,
+                userId,
+            },
+        });
+
+        // Return images
+        const esResult = await esClient.get({ index: 'properties', id: property.elasticsearchId });
+        res.json({ granted: true, images: (esResult._source as any)?.images || [] });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// List available clauses
+export const listClauses = async (_req: Request, res: Response) => {
+    try {
+        const clauses = getAllClauses().map((c) => ({
+            id: c.id,
+            i18nKey: c.i18nKey,
+        }));
+        res.json({ clauses });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// Accept or reject a contact (for sellers)
+export const updateContactStatus = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { contactId } = req.params;
+        const { status } = req.body;
+        const userId = req.auth!.payload.sub;
+
+        if (!['accepted', 'rejected'].includes(status)) {
+            return res.status(400).json({ error: 'Invalid status. Must be "accepted" or "rejected".' });
+        }
+
+        const contact = await prisma.contact.findUnique({
+            where: { id: contactId },
+            include: { property: true },
+        });
+
+        if (!contact) {
+            return res.status(404).json({ error: 'Contact not found' });
+        }
+
+        // Only property owner can accept/reject
+        if (contact.property.ownerId !== userId) {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        const updated = await prisma.contact.update({
+            where: { id: contactId },
+            data: { status },
+        });
+
+        res.json(updated);
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Internal Server Error' });

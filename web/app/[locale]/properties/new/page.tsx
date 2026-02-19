@@ -7,6 +7,7 @@ import { useTranslations, useLocale } from "next-intl";
 import ImageUploader, { UploadedImage } from "@/app/[locale]/components/ImageUploader";
 import { useCatalogs } from "@/app/hooks/useCatalogs";
 import LocationPicker, { LocationData } from "@/app/components/LocationPicker";
+import ClauseSelectorPopup from "@/app/components/privacy/ClauseSelectorPopup";
 
 export default function NewPropertyPage() {
     const { data: session } = useSession();
@@ -34,6 +35,8 @@ export default function NewPropertyPage() {
         tags: [] as string[],
         isPrivate: false,
     });
+    const [showClauseSelector, setShowClauseSelector] = useState(false);
+    const [selectedClauses, setSelectedClauses] = useState<string[]>([]);
     const [location, setLocation] = useState<LocationData | null>(null);
     const [images, setImages] = useState<UploadedImage[]>([]);
 
@@ -78,6 +81,9 @@ export default function NewPropertyPage() {
                 images: images,
                 contact: {},
                 isPrivate: formData.isPrivate,
+                accessRequirements: formData.isPrivate && selectedClauses.length > 0
+                    ? { clauses: selectedClauses }
+                    : null,
             };
 
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/properties`, {
@@ -463,15 +469,35 @@ export default function NewPropertyPage() {
                                 <input
                                     type="checkbox"
                                     checked={formData.isPrivate}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, isPrivate: e.target.checked })
-                                    }
+                                    onChange={(e) => {
+                                        const isPrivate = e.target.checked;
+                                        setFormData({ ...formData, isPrivate });
+                                        if (isPrivate) {
+                                            setShowClauseSelector(true);
+                                        } else {
+                                            setSelectedClauses([]);
+                                        }
+                                    }}
                                     className="w-4 h-4 text-primary-dark border-neutral-warm rounded focus:ring-primary-dark"
                                 />
                                 <span className="text-sm font-medium text-text-primary">
                                     {t("privacy.privateProperty")}
                                 </span>
                             </label>
+                            {formData.isPrivate && selectedClauses.length > 0 && (
+                                <div className="mt-3 p-3 bg-amber-50 rounded-xl">
+                                    <p className="text-sm text-amber-800 font-medium mb-1">
+                                        {selectedClauses.length} {selectedClauses.length === 1 ? 'requisit' : 'requisits'} seleccionat{selectedClauses.length !== 1 ? 's' : ''}
+                                    </p>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowClauseSelector(true)}
+                                        className="text-xs text-amber-700 underline hover:text-amber-900"
+                                    >
+                                        Modificar requisits
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         {/* Submit Button */}
@@ -491,6 +517,18 @@ export default function NewPropertyPage() {
                                 {loading ? t("submit.publishing") : t("submit.publish")}
                             </button>
                         </div>
+                        {showClauseSelector && (
+                            <ClauseSelectorPopup
+                                selectedClauses={selectedClauses}
+                                onChange={setSelectedClauses}
+                                onClose={() => {
+                                    setShowClauseSelector(false);
+                                    if (selectedClauses.length === 0) {
+                                        setFormData({ ...formData, isPrivate: false });
+                                    }
+                                }}
+                            />
+                        )}
                     </form>
                 </div>
             </div>

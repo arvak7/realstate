@@ -128,6 +128,12 @@ rm infra/.zitadel-configured && ./infra/setup-zitadel.sh
 
 Large feature plans are documented in `features/` directory. Check there for context, rationale and implementation details.
 
+**IMPORTANT**: When implementing code changes for a feature, ALWAYS update the corresponding `features/*.md` file:
+- Mark completed checklist items with `[x]`
+- Update the "Estat" column in the files table (Pendent → Completat)
+- If a new issue is discovered, add it to the feature doc
+- This ensures the feature MD is always the source of truth for progress tracking
+
 ## Internationalization (i18n)
 
 Uses `next-intl` with three locales:

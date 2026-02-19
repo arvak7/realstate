@@ -1,4 +1,4 @@
-import { minioClient, MINIO_BUCKET, esClient } from '../config';
+import { minioClient, MINIO_BUCKET, esClient, prisma } from '../config';
 
 // Export for use in other modules
 export { minioClient };
@@ -106,7 +106,8 @@ export async function initElasticsearch() {
                                     views_count: { type: 'integer' },
                                     favorites_count: { type: 'integer' }
                                 }
-                            }
+                            },
+                            is_private: { type: 'boolean' }
                         }
                     }
                 }
@@ -115,5 +116,27 @@ export async function initElasticsearch() {
         }
     } catch (err) {
         console.error("Elasticsearch init error:", err);
+    }
+}
+
+// Sync is_private from PostgreSQL to Elasticsearch for existing properties
+export async function syncPrivacyToElasticsearch() {
+    try {
+        const properties = await prisma.property.findMany({
+            select: { elasticsearchId: true, isPrivate: true },
+        });
+
+        if (properties.length === 0) return;
+
+        const bulkOps = properties.flatMap((p) => [
+            { update: { _index: 'properties', _id: p.elasticsearchId } },
+            { doc: { is_private: p.isPrivate } },
+        ]);
+
+        const result = await esClient.bulk({ body: bulkOps });
+        const errorCount = result.items?.filter((i: any) => i.update?.error).length || 0;
+        console.log(`Synced is_private to ES for ${properties.length} properties (${errorCount} errors).`);
+    } catch (err) {
+        console.error('Failed to sync is_private to ES:', err);
     }
 }

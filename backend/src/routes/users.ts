@@ -21,6 +21,7 @@ router.use(checkJwt);
 
 router.get('/', UserController.getMe);
 router.get('/properties', UserController.getMyProperties);
+router.get('/contacts', UserController.getMyContacts);
 
 // Profile photo management
 router.post('/profile-photo/upload-url', UserController.generateProfilePhotoUploadUrl);

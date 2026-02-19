@@ -7,6 +7,9 @@ import { useRouter, Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
+import GhostImageOverlay from "@/app/components/privacy/GhostImageOverlay";
+import PrivatePropertyBadge from "@/app/components/privacy/PrivatePropertyBadge";
+import RequirementsModal from "@/app/components/privacy/RequirementsModal";
 
 // Dynamic import for Leaflet (SSR not supported)
 const PrivacyCircleMap = dynamic(
@@ -61,6 +64,13 @@ interface PropertyDetail {
         phone?: string;
         email?: string;
     };
+    accessRequirements?: {
+        clauses: string[];
+    };
+    photoAccess?: {
+        granted: boolean;
+        requiredClauses?: string[];
+    };
 }
 
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string; locale: string }> }) {
@@ -70,9 +80,11 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     const [property, setProperty] = useState<PropertyDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
+    const [showRequirementsModal, setShowRequirementsModal] = useState(false);
     const t = useTranslations("propertyDetail");
     const tCommon = useTranslations("common");
     const tNav = useTranslations("nav");
+    const tPrivate = useTranslations("privatePhotos");
 
     useEffect(() => {
         fetchProperty();
@@ -146,6 +158,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
     const images = property.images || [];
     const currentImage = images[currentImageIndex];
+    const isOwner = session?.user?.email === property.owner.email;
+    const showGhost = property.isPrivate && !isOwner && !property.photoAccess?.granted;
 
     return (
         <div className="min-h-screen bg-white">
@@ -170,78 +184,97 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-8">
-                        {/* Image Gallery */}
-                        <div className="relative">
-                            <div className="aspect-[16/10] rounded-2xl overflow-hidden bg-neutral-warm">
-                                {currentImage ? (
-                                    <img
-                                        src={currentImage.url}
-                                        alt={property.basic_info.title}
-                                        className="w-full h-full object-cover"
-                                    />
-                                ) : (
-                                    <img
-                                        src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&h=750&fit=crop"
-                                        alt="Placeholder"
-                                        className="w-full h-full object-cover"
-                                    />
-                                )}
-                            </div>
-
-                            {images.length > 1 && (
-                                <>
-                                    <button
-                                        onClick={() =>
-                                            setCurrentImageIndex((prev) =>
-                                                prev === 0 ? images.length - 1 : prev - 1
-                                            )
-                                        }
-                                        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-soft transition-all"
-                                    >
-                                        <svg className="w-5 h-5 text-kindred-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                                        </svg>
-                                    </button>
-                                    <button
-                                        onClick={() =>
-                                            setCurrentImageIndex((prev) =>
-                                                prev === images.length - 1 ? 0 : prev + 1
-                                            )
-                                        }
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-soft transition-all"
-                                    >
-                                        <svg className="w-5 h-5 text-kindred-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                        </svg>
-                                    </button>
-                                    <div className="absolute bottom-4 right-4 bg-white/90 px-3 py-1.5 rounded-pill text-sm font-medium text-kindred-dark">
-                                        {currentImageIndex + 1} / {images.length}
+                        {/* Image Gallery / Ghost Mode */}
+                        {showGhost ? (
+                            <GhostImageOverlay
+                                totalImages={images.length}
+                                isMainSlot={true}
+                                onClick={() => {
+                                    if (session) {
+                                        setShowRequirementsModal(true);
+                                    }
+                                }}
+                            />
+                        ) : (
+                            <>
+                                <div className="relative">
+                                    <div className="aspect-[16/10] rounded-2xl overflow-hidden bg-neutral-warm">
+                                        {currentImage ? (
+                                            <img
+                                                src={currentImage.url}
+                                                alt={property.basic_info.title}
+                                                className="w-full h-full object-cover"
+                                            />
+                                        ) : (
+                                            <img
+                                                src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&h=750&fit=crop"
+                                                alt="Placeholder"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        )}
                                     </div>
-                                </>
-                            )}
-                        </div>
 
-                        {/* Thumbnails */}
-                        {images.length > 1 && (
-                            <div className="flex gap-3 overflow-x-auto pb-2">
-                                {images.map((img, idx) => (
-                                    <button
-                                        key={idx}
-                                        onClick={() => setCurrentImageIndex(idx)}
-                                        className={`flex-shrink-0 w-24 h-16 rounded-xl overflow-hidden transition-all ${
-                                            idx === currentImageIndex
-                                                ? "ring-2 ring-kindred-dark ring-offset-2"
-                                                : "opacity-60 hover:opacity-100"
-                                        }`}
-                                    >
-                                        <img
-                                            src={img.url}
-                                            alt={t("imageAlt", { number: idx + 1 })}
-                                            className="w-full h-full object-cover"
-                                        />
-                                    </button>
-                                ))}
-                            </div>
+                                    {/* Private badge for owner or granted access */}
+                                    {property.isPrivate && !showGhost && (
+                                        <PrivatePropertyBadge variant="overlay" />
+                                    )}
+
+                                    {images.length > 1 && (
+                                        <>
+                                            <button
+                                                onClick={() =>
+                                                    setCurrentImageIndex((prev) =>
+                                                        prev === 0 ? images.length - 1 : prev - 1
+                                                    )
+                                                }
+                                                className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-soft transition-all"
+                                            >
+                                                <svg className="w-5 h-5 text-kindred-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                                </svg>
+                                            </button>
+                                            <button
+                                                onClick={() =>
+                                                    setCurrentImageIndex((prev) =>
+                                                        prev === images.length - 1 ? 0 : prev + 1
+                                                    )
+                                                }
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white p-3 rounded-full shadow-soft transition-all"
+                                            >
+                                                <svg className="w-5 h-5 text-kindred-dark" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                                </svg>
+                                            </button>
+                                            <div className="absolute bottom-4 right-4 bg-white/90 px-3 py-1.5 rounded-pill text-sm font-medium text-kindred-dark">
+                                                {currentImageIndex + 1} / {images.length}
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+
+                                {/* Thumbnails */}
+                                {images.length > 1 && (
+                                    <div className="flex gap-3 overflow-x-auto pb-2">
+                                        {images.map((img, idx) => (
+                                            <button
+                                                key={idx}
+                                                onClick={() => setCurrentImageIndex(idx)}
+                                                className={`flex-shrink-0 w-24 h-16 rounded-xl overflow-hidden transition-all ${
+                                                    idx === currentImageIndex
+                                                        ? "ring-2 ring-kindred-dark ring-offset-2"
+                                                        : "opacity-60 hover:opacity-100"
+                                                }`}
+                                            >
+                                                <img
+                                                    src={img.url}
+                                                    alt={t("imageAlt", { number: idx + 1 })}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
                         )}
 
                         {/* Property Info */}
@@ -423,6 +456,18 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                 </div>
             </div>
+
+            {showRequirementsModal && property && (
+                <RequirementsModal
+                    propertyId={property.id}
+                    requiredClauses={property.accessRequirements?.clauses || property.photoAccess?.requiredClauses || []}
+                    onClose={() => setShowRequirementsModal(false)}
+                    onAccessGranted={(images) => {
+                        // Update property images in state
+                        setProperty(prev => prev ? { ...prev, images, photoAccess: { granted: true } } : prev);
+                    }}
+                />
+            )}
 
             <Footer />
         </div>

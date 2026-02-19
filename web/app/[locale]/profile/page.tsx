@@ -38,7 +38,16 @@ export default function ProfilePage() {
                             <h3 className="text-lg font-medium text-kindred-dark mb-4">
                                 Foto de perfil
                             </h3>
-                            <ProfilePhotoUploader />
+                            {session.user?.authProvider === 'google' ? (
+                                // Google user — photo is managed by Google, not uploadable here
+                                <div className="text-sm text-kindred-gray bg-neutral-warm/50 rounded-xl px-4 py-3">
+                                    La teva foto de perfil és gestionada per Google.
+                                    Per canviar-la, fes-ho des del teu compte de Google.
+                                </div>
+                            ) : (
+                                // Internal / demo user — can upload a custom photo
+                                <ProfilePhotoUploader />
+                            )}
                         </div>
                     </div>
 

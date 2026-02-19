@@ -21,7 +21,9 @@
         "signOut": "Tancar Sessió",
         "exploreProperties": "Explorar Immobles",
         "openMenu": "Obrir menú",
-        "toggleMenu": "Commutar menú"
+        "toggleMenu": "Commutar menú",
+        "dashboard": "Els meus immobles",
+        "profile": "Perfil"
     },
     "home": {
         "hero": {
@@ -257,6 +259,34 @@
         "setAsMain": "Establir com a principal",
         "imageAlt": "Imatge {number}"
     },
+    "privatePhotos": {
+        "title": "Fotos privades",
+        "imageCount": "{count} {count, plural, one {foto} other {fotos}}",
+        "clickToUnlock": "Fes clic per desbloquejar",
+        "badge": "Privat",
+        "accessGranted": "Accés concedit",
+        "ghostAlt": "Fotos privades - accés restringit"
+    },
+    "clauses": {
+        "selectorTitle": "Requisits d'accés a les fotos",
+        "selectorDescription": "Selecciona quins requisits hauran de complir els compradors per veure les fotos del teu immoble.",
+        "minRequired": "Has de seleccionar almenys un requisit",
+        "confirm": "Confirmar",
+        "requirementsTitle": "Requisits per veure les fotos",
+        "requirementsDescription": "Per veure les fotos d'aquest immoble, has de complir els següents requisits:",
+        "notAllMet": "No compleixes tots els requisits",
+        "viewPhotos": "Veure fotos",
+        "requesting": "Sol·licitant...",
+        "close": "Tancar",
+        "identityVerification": {
+            "name": "Verificació d'identitat",
+            "description": "Has de verificar la teva identitat"
+        },
+        "buyerSellerMatch": {
+            "name": "Contacte acceptat",
+            "description": "El propietari ha d'acceptar la teva sol·licitud de contacte"
+        }
+    },
     "auth": {
         "welcome": "Benvingut/da",
         "loginSubtitle": "Inicia sessió per accedir al teu compte",
@@ -332,6 +362,53 @@
             "G": "G",
             "en_tramit": "En tràmit",
             "exempt": "Exempt"
+        }
+    },
+    "dashboard": {
+        "title": "Dashboard",
+        "tabs": {
+            "properties": "Els meus immobles",
+            "contacts": "Sol·licituds de contacte"
+        },
+        "properties": {
+            "empty": "Encara no has publicat cap immoble.",
+            "publishFirst": "Publicar el primer immoble",
+            "status": {
+                "active": "Actiu",
+                "paused": "Pausat",
+                "closed": "Tancat"
+            },
+            "views": "{count} visites",
+            "contacts": "{count} contactes",
+            "favorites": "{count} favorits",
+            "edit": "Editar",
+            "delete": "Eliminar",
+            "confirmDelete": "Segur que vols eliminar aquest immoble?",
+            "deleted": "Immoble eliminat correctament",
+            "deleteError": "Error eliminant l'immoble",
+            "privateLabel": "Privat",
+            "accessRequests": "Peticions d'accés",
+            "accessRequestsPending": "{count} {count, plural, one {pendent} other {pendents}}",
+            "accessRequestsEmpty": "Cap petició pendent"
+        },
+        "contacts": {
+            "empty": "No tens cap sol·licitud de contacte.",
+            "pending": "Pendent",
+            "accepted": "Acceptada",
+            "rejected": "Rebutjada",
+            "accept": "Acceptar",
+            "reject": "Rebutjar",
+            "filterAll": "Totes",
+            "filterPending": "Pendents",
+            "filterAccepted": "Acceptades",
+            "filterRejected": "Rebutjades",
+            "buyer": "Comprador",
+            "property": "Immoble",
+            "message": "Missatge",
+            "date": "Data",
+            "noMessage": "Sense missatge",
+            "statusUpdated": "Estat actualitzat correctament",
+            "statusError": "Error actualitzant l'estat"
         }
     },
     "metadata": {

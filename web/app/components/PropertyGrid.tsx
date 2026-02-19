@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import GhostImageOverlay from "@/app/components/privacy/GhostImageOverlay";
 
 interface Property {
     id: string;
+    is_private?: boolean;
     basic_info: {
         title: string;
         description: string;
@@ -80,13 +82,19 @@ export default function PropertyGrid() {
                 >
                     <div className="relative">
                         {/* Image */}
-                        <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-warm mb-4">
-                            <img
-                                src={property.images?.[0]?.url || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=450&fit=crop"}
-                                alt={property.basic_info.title}
-                                className={`w-full h-full object-cover transition-transform duration-500 ${session ? 'group-hover:scale-105' : ''}`}
-                            />
-                        </div>
+                        {property.is_private ? (
+                            <div className="mb-4">
+                                <GhostImageOverlay totalImages={property.images?.length || 0} />
+                            </div>
+                        ) : (
+                            <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-warm mb-4">
+                                <img
+                                    src={property.images?.[0]?.url || "https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=450&fit=crop"}
+                                    alt={property.basic_info.title}
+                                    className={`w-full h-full object-cover transition-transform duration-500 ${session ? 'group-hover:scale-105' : ''}`}
+                                />
+                            </div>
+                        )}
 
                         {/* Price Badge */}
                         <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-pill text-sm font-semibold text-kindred-dark shadow-soft">

@@ -16,6 +16,7 @@ declare module "next-auth" {
             profilePhotoUrl?: string | null;
             oauthProfileImage?: string | null;
             effectiveProfileImage?: string | null;
+            authProvider?: string | null;
         };
         accessToken?: string;
     }
@@ -28,5 +29,6 @@ declare module "next-auth/jwt" {
         idToken?: string;
         profilePhotoUrl?: string | null;
         oauthProfileImage?: string | null;
+        authProvider?: string | null;
     }
 }

@@ -43,7 +43,8 @@ services:
     networks:
       - realstate-net
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     environment:
       ZITADEL_DATABASE_POSTGRES_HOST: postgres
       ZITADEL_DATABASE_POSTGRES_PORT: 5432

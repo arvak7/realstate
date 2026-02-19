@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { prisma } from '../config';
+import { prisma, esClient } from '../config';
 import { AuthenticatedRequest } from '../middleware/auth';
 
 export const getMyProperties = async (req: AuthenticatedRequest, res: Response) => {
@@ -8,10 +8,48 @@ export const getMyProperties = async (req: AuthenticatedRequest, res: Response) 
 
         const properties = await prisma.property.findMany({
             where: { ownerId: userId },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            include: {
+                _count: { select: { contacts: true, propertyViews: true, favorites: true } }
+            }
         });
 
-        res.json(properties);
+        if (properties.length === 0) {
+            return res.json([]);
+        }
+
+        // Enrich with ES data (title, price, images, etc.)
+        const esIds = properties.map(p => p.elasticsearchId);
+        const esResult = await esClient.mget({
+            index: 'properties',
+            ids: esIds,
+        });
+
+        const esDataMap = new Map<string, any>();
+        for (const doc of esResult.docs) {
+            if ((doc as any).found) {
+                esDataMap.set(doc._id, (doc as any)._source);
+            }
+        }
+
+        const enriched = properties.map(p => {
+            const es = esDataMap.get(p.elasticsearchId) || {};
+            return {
+                id: p.id,
+                elasticsearchId: p.elasticsearchId,
+                status: p.status,
+                isPrivate: p.isPrivate,
+                address: p.address,
+                createdAt: p.createdAt,
+                updatedAt: p.updatedAt,
+                basic_info: es.basic_info || null,
+                images: es.images || [],
+                metadata: es.metadata || null,
+                _count: (p as any)._count,
+            };
+        });
+
+        res.json(enriched);
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -30,6 +68,7 @@ export const getMe = async (req: AuthenticatedRequest, res: Response) => {
                 name: true,
                 profilePhotoUrl: true,
                 oauthProfileImage: true,
+                authProvider: true,
                 identityVerified: true,
                 createdAt: true
             }
@@ -166,6 +205,66 @@ export const deleteProfilePhoto = async (req: AuthenticatedRequest, res: Respons
         });
 
         res.json(updatedUser);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+export const getMyContacts = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const userId = req.auth!.payload.sub;
+        const { status } = req.query;
+
+        const where: any = {
+            property: { ownerId: userId },
+        };
+        if (status && typeof status === 'string' && ['pending', 'accepted', 'rejected'].includes(status)) {
+            where.status = status;
+        }
+
+        const contacts = await prisma.contact.findMany({
+            where,
+            include: {
+                property: {
+                    select: { id: true, address: true, elasticsearchId: true }
+                },
+                user: {
+                    select: { id: true, name: true, email: true, profilePhotoUrl: true, oauthProfileImage: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        // Enrich with property title from ES
+        const esIds = [...new Set(contacts.map(c => c.property.elasticsearchId))];
+        const esDataMap = new Map<string, any>();
+        if (esIds.length > 0) {
+            const esResult = await esClient.mget({ index: 'properties', ids: esIds });
+            for (const doc of esResult.docs) {
+                if ((doc as any).found) {
+                    esDataMap.set(doc._id, (doc as any)._source);
+                }
+            }
+        }
+
+        const enriched = contacts.map(c => {
+            const es = esDataMap.get(c.property.elasticsearchId) || {};
+            return {
+                id: c.id,
+                message: c.message,
+                status: c.status,
+                createdAt: c.createdAt,
+                property: {
+                    id: c.property.id,
+                    address: c.property.address,
+                    title: es.basic_info?.title || null,
+                },
+                buyer: c.user,
+            };
+        });
+
+        res.json(enriched);
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Internal Server Error' });

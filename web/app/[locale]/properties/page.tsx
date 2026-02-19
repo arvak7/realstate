@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import GhostImageOverlay from "@/app/components/privacy/GhostImageOverlay";
 
 // Dynamic imports for maps (SSR not supported)
 const PropertyListMap = dynamic(
@@ -21,6 +22,7 @@ const PrivacyCircleMap = dynamic(
 
 interface Property {
     id: string;
+    is_private?: boolean;
     basic_info: {
         title: string;
         description: string;
@@ -258,21 +260,29 @@ export default function PropertiesPage() {
                                         className="group block"
                                     >
                                         <div className="relative">
-                                            <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-warm mb-4">
-                                                {property.images?.[0]?.url ? (
-                                                    <img
-                                                        src={property.images[0].url}
-                                                        alt={property.basic_info?.title || t("noTitle")}
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            {property.is_private ? (
+                                                <div className="mb-4">
+                                                    <GhostImageOverlay
+                                                        totalImages={property.images?.length || 0}
                                                     />
-                                                ) : (
-                                                    <img
-                                                        src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=450&fit=crop"
-                                                        alt="Placeholder"
-                                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                                    />
-                                                )}
-                                            </div>
+                                                </div>
+                                            ) : (
+                                                <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-warm mb-4">
+                                                    {property.images?.[0]?.url ? (
+                                                        <img
+                                                            src={property.images[0].url}
+                                                            alt={property.basic_info?.title || t("noTitle")}
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        />
+                                                    ) : (
+                                                        <img
+                                                            src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&h=450&fit=crop"
+                                                            alt="Placeholder"
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                        />
+                                                    )}
+                                                </div>
+                                            )}
                                             <div className="absolute top-4 left-4 bg-white/95 backdrop-blur-sm px-3 py-1.5 rounded-pill text-sm font-semibold text-kindred-dark shadow-soft">
                                                 €{property.basic_info?.price?.toLocaleString("ca-ES")}
                                             </div>

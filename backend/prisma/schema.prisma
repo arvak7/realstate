@@ -29,6 +29,7 @@ model User {
   identityVerifications IdentityVerification[]
   propertyVerifications PropertyVerification[] @relation("PropertyVerificationUser")
   reviewedVerifications PropertyVerification[] @relation("PropertyVerificationReviewer")
+  photoAccess           PropertyPhotoAccess[]
 
   @@unique([authProvider, providerId], name: "unique_provider_id")
   @@index([email])
@@ -57,6 +58,7 @@ model Property {
   favorites             Favorite[]
   ratings               Rating[]
   propertyVerifications PropertyVerification[]
+  photoAccess           PropertyPhotoAccess[]
 
   @@index([ownerId])
   @@index([status])
@@ -125,6 +127,7 @@ model Contact {
   propertyId String   @map("property_id")
   userId     String   @map("user_id")
   message    String?
+  status     String   @default("pending") // 'pending', 'accepted', 'rejected'
   createdAt  DateTime @default(now()) @map("created_at")
 
   property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
@@ -164,6 +167,21 @@ model Favorite {
   @@index([userId])
   @@index([propertyId])
   @@map("favorites")
+}
+
+model PropertyPhotoAccess {
+  id         String   @id @default(uuid())
+  propertyId String   @map("property_id")
+  userId     String   @map("user_id")
+  grantedAt  DateTime @default(now()) @map("granted_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, userId])
+  @@index([propertyId])
+  @@index([userId])
+  @@map("property_photo_access")
 }
 
 // Catalog Tables for Dynamic Dropdowns

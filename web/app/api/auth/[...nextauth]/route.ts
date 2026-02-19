@@ -11,7 +11,7 @@ export const authOptions: NextAuthOptions = {
             clientSecret: process.env.ZITADEL_CLIENT_SECRET || "",
             authorization: {
                 params: {
-                    scope: "openid profile email offline_access",
+                    scope: "openid profile email offline_access urn:zitadel:iam:user:metadata",
                 },
             },
         }),
@@ -57,14 +57,43 @@ export const authOptions: NextAuthOptions = {
     ],
     callbacks: {
         async signIn({ user, account, profile }) {
-            // Capture OAuth profile image from Zitadel (which may come from Google, Facebook, etc.)
             if (account?.provider === 'zitadel' && profile) {
-                const oauthPicture = (profile as any).picture ||
-                                     (profile as any).avatar_url ||
-                                     (profile as any).image;
+                const p = profile as Record<string, unknown>;
+
+                // 1) Standard OIDC picture claim (from Zitadel Actions complement token)
+                let oauthPicture = (typeof p.picture === 'string') ? p.picture : '';
+
+                // 2) Zitadel metadata object (from urn:zitadel:iam:user:metadata scope)
+                //    Returned as { "urn:zitadel:iam:user:metadata": { picture: "base64...", ... } }
+                if (!oauthPicture) {
+                    const metaObj = p['urn:zitadel:iam:user:metadata'];
+                    if (metaObj && typeof metaObj === 'object') {
+                        const picB64 = (metaObj as Record<string, unknown>).picture;
+                        if (typeof picB64 === 'string' && picB64) {
+                            try {
+                                oauthPicture = Buffer.from(picB64, 'base64').toString('utf-8');
+                            } catch {
+                                oauthPicture = picB64;
+                            }
+                        }
+                    }
+                }
+
+                // 3) Fallback to user.image (from NextAuth provider profile mapping)
+                if (!oauthPicture && user.image) {
+                    oauthPicture = user.image;
+                }
+
                 if (oauthPicture) {
                     (user as any).oauthProfileImage = oauthPicture;
                 }
+
+                // Debug logging (remove after confirming picture works)
+                console.log('[auth-debug] signIn profile keys:', Object.keys(p).join(', '));
+                console.log('[auth-debug] profile.picture:', p.picture);
+                console.log('[auth-debug] metadata obj:', JSON.stringify(p['urn:zitadel:iam:user:metadata']));
+                console.log('[auth-debug] user.image:', user.image);
+                console.log('[auth-debug] resolved oauthPicture:', oauthPicture || '(none)');
             }
             return true;
         },
@@ -85,6 +114,27 @@ export const authOptions: NextAuthOptions = {
                 token.email = user.email;
                 token.profilePhotoUrl = user.profilePhotoUrl;
                 token.oauthProfileImage = (user as any).oauthProfileImage;
+                token.authProvider = (user as any).authProvider;
+            }
+
+            // On first Zitadel login, fetch user data from backend (oauthProfileImage + authProvider)
+            if (account && account.provider === 'zitadel' && token.accessToken) {
+                try {
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/me`, {
+                        headers: { 'Authorization': `Bearer ${token.accessToken}` },
+                    });
+                    if (res.ok) {
+                        const userData = await res.json();
+                        if (userData.oauthProfileImage) {
+                            token.oauthProfileImage = userData.oauthProfileImage;
+                        }
+                        if (userData.authProvider) {
+                            token.authProvider = userData.authProvider;
+                        }
+                    }
+                } catch (e) {
+                    console.error('[auth] Error fetching user data on login:', e);
+                }
             }
 
             // Token refresh: if Zitadel access token is about to expire, refresh it
@@ -129,6 +179,7 @@ export const authOptions: NextAuthOptions = {
                         const userData = await response.json();
                         token.profilePhotoUrl = userData.profilePhotoUrl;
                         token.oauthProfileImage = userData.oauthProfileImage;
+                        token.authProvider = userData.authProvider;
                     }
                 } catch (error) {
                     console.error('Error refreshing user data:', error);
@@ -142,6 +193,7 @@ export const authOptions: NextAuthOptions = {
                 (session.user as any).id = token.id as string;
                 (session.user as any).profilePhotoUrl = token.profilePhotoUrl;
                 (session.user as any).oauthProfileImage = token.oauthProfileImage;
+                (session.user as any).authProvider = token.authProvider;
                 (session.user as any).effectiveProfileImage =
                     token.profilePhotoUrl || token.oauthProfileImage || null;
             }
