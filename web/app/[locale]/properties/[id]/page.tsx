@@ -2,8 +2,9 @@
 
 import { useState, useEffect, use } from "react";
 import dynamic from "next/dynamic";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { useRouter, Link } from "@/i18n/navigation";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
@@ -77,6 +78,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     const { id } = use(params);
     const { data: session } = useSession();
     const router = useRouter();
+    const pathname = usePathname();
     const [property, setProperty] = useState<PropertyDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -110,7 +112,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
     const handleContact = () => {
         if (!session) {
-            router.push("/auth/signin");
+            signIn("zitadel", { callbackUrl: pathname });
             return;
         }
         alert(t("contactInDevelopment"));
@@ -423,12 +425,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                                     <p className="text-kindred-gray mb-6">
                                         {t("loginToContact")}
                                     </p>
-                                    <Link
-                                        href="/auth/signin"
-                                        className="w-full btn-primary justify-center block text-center"
+                                    <button
+                                        onClick={() => signIn("zitadel", { callbackUrl: pathname })}
+                                        className="w-full btn-primary justify-center"
                                     >
                                         {tNav("signIn")}
-                                    </Link>
+                                    </button>
                                 </div>
                             )}
 

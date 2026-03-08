@@ -5,6 +5,7 @@ import { initMinio, initElasticsearch, syncPrivacyToElasticsearch } from './serv
 import propertyRoutes from './routes/properties';
 import userRoutes from './routes/users';
 import catalogRoutes from './routes/catalogs';
+import webhookRoutes from './routes/webhooks';
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.get('/health', (req, res) => res.send('OK'));
 app.use('/catalogs', catalogRoutes);
 app.use('/properties', propertyRoutes);
 app.use('/me', userRoutes);
+app.use('/webhooks', webhookRoutes);
 
 app.listen(PORT, async () => {
     console.log(`Backend listening on port ${PORT}`);

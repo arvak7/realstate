@@ -170,8 +170,71 @@ Caddy fa proxy HTTPS a 8443 però NextAuth parla directament a HTTP 8080.
 ## Verificació pendent
 
 1. ~~`./start-all.sh` → setup-zitadel s'executa sense errors~~ ✅ (script manual OK)
-2. Login → botó "Iniciar Sessió" → redirecció a Zitadel → opció Google
-3. Login amb Google → sessió vàlida al frontend
-4. Usuari creat a taula User (verificar amb Prisma Studio)
-5. Crear propietat → funciona sense error FK
-6. Demo login segueix funcionant
+2. ~~Login → botó "Iniciar Sessió" → redirecció a Zitadel → opció Google~~ ✅
+3. ~~Login amb Google → sessió vàlida al frontend~~ ✅
+4. ~~Usuari creat a taula User (verificar amb Prisma Studio)~~ ✅
+5. ~~Crear propietat → funciona sense error FK~~ ✅
+6. ~~Demo login segueix funcionant~~ ✅ (eliminat en auth de producció, 2026-02-19)
+7. Foto de perfil de Google apareix al navbar ⬜ (pendent — fix de Zitadel Actions quotes bug + refactor NextAuth)
+
+---
+
+## Audit 2026-02-23 — Problemes trobats i resolts
+
+### Bugs crítics
+
+1. **Zitadel `appendMetadata` bug #8338**: `appendMetadata(key, value)` fa `JSON.stringify` del valor → la URL es guarda com `"\"https://...\""` (amb cometes dobles extra). Quan `addPictureClaim` llegeix la metadata amb `getMetadata()`, rep el valor amb cometes → el token OIDC conté `"\"https://...\""` en comptes de `"https://..."`.
+   - **Fix**: `addPictureClaim` ha de fer `JSON.parse()` del valor si comença per `"`.
+
+2. **DB user data incorrecta**: L'auto-provisió creava `name='User'` i `email='<sub>@zitadel.local'` (fallback). L'authProvider quedava a `'zitadel'` en comptes de `'google'`. Causa: conflicte email unique (demo user) → fallback amb dades genèriques.
+
+3. **NextAuth `route.ts` — codi mort i complexitat innecessària**:
+   - `_pictureFetched` catch-up: afegit com a workaround temporal, però no hauria de ser necessari si la pipeline funciona
+   - 3 blocs separats que fetchen `/me` (initial login, catch-up, session update) — duplicació
+   - `accessToken` i `idToken` exposats a la sessió del client (security smell)
+
+4. **Backend `auth.ts` — over-engineering**:
+   - `syncPictureFromZitadel` amb 2 fonts (metadata + v2 profile) — complexitat innecessària si les Actions funcionen
+   - Metadata scope path (punt 2 del `provisionUser`) ja no s'usa però el codi hi és
+   - `getAdminPat()` llegeix fitxer de disc en cada request (hauria de ser lazy singleton, que ja ho és, però el pattern és confús)
+
+### Millores de seguretat
+
+1. **`NEXTAUTH_SECRET=changeme1234567890`**: Insegur per producció
+2. **`session.accessToken` exposat al client**: L'access token de Zitadel s'exposa via `session` callback → visible al JS del navegador. Millor mantenir-lo només al JWT server-side.
+3. **`session.idToken` exposat al client**: Necessari per logout OIDC, però millor no exposar-lo a la sessió genèrica.
+4. **`NODE_TLS_REJECT_UNAUTHORIZED=0`**: Acceptable per dev, perillós per prod.
+
+### Code smells
+
+1. **`as any` per tot**: NextAuth types no estan augmentats → `(session.user as any).id`, `(user as any).oauthProfileImage`, etc. Cal `next-auth.d.ts`.
+2. **Duplicació de fetch `/me`**: 3 llocs al jwt callback fan la mateixa crida
+3. **`user.profilePhotoUrl` al jwt callback**: `user.profilePhotoUrl` és `undefined` durant signIn (NextAuth User no té aquest camp) — sempre `undefined`
+
+---
+
+## TODO Producció
+
+### SMTP / Verificació de correu electrònic ⚠️
+
+**Problema**: Sense SMTP configurat, Zitadel no pot enviar emails → els usuaris nous s'activen immediatament sense verificar el correu.
+
+**Impacte en producció**:
+- Qualsevol persona pot registrar-se amb l'email d'un altre
+- No hi ha recuperació de contrasenya per email
+- No hi ha MFA via email
+
+**Com implementar**:
+1. Escollir proveïdor SMTP transaccional (recomanat: **Resend**, SendGrid, Mailgun)
+2. Obtenir credencials SMTP del proveïdor
+3. Afegir variables d'entorn a `infra/.env` (o equivalent):
+   ```
+   SMTP_HOST=smtp.resend.com
+   SMTP_PORT=465
+   SMTP_USER=resend
+   SMTP_PASSWORD=re_xxxxxxxx
+   SMTP_FROM=noreply@yourdomain.com
+   SMTP_FROM_NAME=Immobles
+   ```
+4. A `setup-zitadel.sh` hi ha un bloc comentat (cerca `TODO (PRODUCTION): Configure SMTP`) llest per descomentar
+5. Esborrar el flag i re-executar: `rm infra/.zitadel-configured && bash infra/setup-zitadel.sh`

@@ -4,6 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { useSession, signOut, signIn } from "next-auth/react";
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { usePathname } from "next/navigation";
 import LanguageSwitcher from "./LanguageSwitcher";
 import UserAvatar from "../../components/UserAvatar";
 
@@ -12,8 +13,27 @@ export default function Navbar() {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const userMenuRef = useRef<HTMLDivElement>(null);
+    const pathname = usePathname();
     const t = useTranslations("nav");
     const tCommon = useTranslations("common");
+
+    // Sign out from NextAuth AND end the Zitadel session so the account picker shows next login
+    const handleSignOut = async () => {
+        setUserMenuOpen(false);
+        setMobileMenuOpen(false);
+        const idToken = (session as any)?.idToken;
+        await signOut({ redirect: false });
+        const issuer = process.env.NEXT_PUBLIC_ZITADEL_ISSUER || 'http://localhost:8080';
+        if (idToken) {
+            const params = new URLSearchParams({
+                id_token_hint: idToken,
+                post_logout_redirect_uri: window.location.origin,
+            });
+            window.location.href = `${issuer}/oidc/v1/end_session?${params}`;
+        } else {
+            window.location.href = '/';
+        }
+    };
 
     // Close user menu on click outside
     useEffect(() => {
@@ -56,17 +76,17 @@ export default function Navbar() {
                         {!session && (
                             <>
                                 <button
-                                    onClick={() => signIn()}
+                                    onClick={() => signIn("zitadel", { callbackUrl: "/" })}
                                     className="btn-secondary text-sm py-2 px-5"
                                 >
                                     {t("signIn")}
                                 </button>
-                                <Link
-                                    href="/properties"
+                                <button
+                                    onClick={() => signIn("zitadel", { callbackUrl: pathname }, { prompt: "create" })}
                                     className="btn-primary text-sm py-2 px-5"
                                 >
-                                    {t("exploreProperties")}
-                                </Link>
+                                    {t("createAccount")}
+                                </button>
                             </>
                         )}
 
@@ -114,10 +134,7 @@ export default function Navbar() {
                                         </Link>
                                         <div className="border-t border-gray-100 mt-1 pt-1">
                                             <button
-                                                onClick={() => {
-                                                    signOut();
-                                                    setUserMenuOpen(false);
-                                                }}
+                                                onClick={handleSignOut}
                                                 className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
                                             >
                                                 {t("signOut")}
@@ -193,25 +210,33 @@ export default function Navbar() {
                                         </span>
                                     </div>
                                     <button
-                                        onClick={() => {
-                                            signOut();
-                                            setMobileMenuOpen(false);
-                                        }}
+                                        onClick={handleSignOut}
                                         className="text-left text-red-600 font-medium py-3 px-4 hover:bg-red-50 rounded-lg transition-colors"
                                     >
                                         {t("signOut")}
                                     </button>
                                 </>
                             ) : (
-                                <button
-                                    onClick={() => {
-                                        signIn();
-                                        setMobileMenuOpen(false);
-                                    }}
-                                    className="text-left text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
-                                >
-                                    {t("signIn")}
-                                </button>
+                                <>
+                                    <button
+                                        onClick={() => {
+                                            setMobileMenuOpen(false);
+                                            signIn("zitadel", { callbackUrl: "/" });
+                                        }}
+                                        className="text-left text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
+                                    >
+                                        {t("signIn")}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setMobileMenuOpen(false);
+                                            signIn("zitadel", { callbackUrl: pathname }, { prompt: "create" });
+                                        }}
+                                        className="text-left text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
+                                    >
+                                        {t("createAccount")}
+                                    </button>
+                                </>
                             )}
                         </div>
                     </div>

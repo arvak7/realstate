@@ -21,7 +21,7 @@ export type AuthenticatedRequest = Request & {
 const userCache = new Map<string, number>();
 const USER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-// Lazily load the Zitadel admin PAT for metadata API calls
+// Lazily loaded Zitadel admin PAT for Management API calls
 let _adminPat: string | null = null;
 function getAdminPat(): string | null {
     if (_adminPat !== null) return _adminPat || null;
@@ -38,123 +38,113 @@ function getAdminPat(): string | null {
     return _adminPat || null;
 }
 
-// Resolve the auth provider from the JWT's amr (Authentication Method Reference) claim.
-// Returns a provisional value: 'google' for external IdPs, 'zitadel' for internal users.
-// The actual IdP name is refined asynchronously by syncIdpFromZitadel().
+// Resolve auth provider from JWT amr (Authentication Method Reference) claim.
 function resolveAuthProvider(payload: Record<string, unknown>): string {
     const amr = payload.amr;
     if (Array.isArray(amr) && amr.includes('external')) {
-        // External IdP - we only have Google configured for now
-        return 'google';
+        return 'google'; // Only Google configured for now
     }
-    // Internal Zitadel user (password, passkey, etc.)
     return 'zitadel';
 }
 
-// Fetch the exact IdP name from Zitadel Management API and update authProvider in DB.
-// This runs asynchronously after provisioning to refine 'google' → actual IdP name.
+// Fetch exact IdP name from Zitadel and update authProvider in DB.
 async function syncIdpFromZitadel(userId: string): Promise<void> {
     const pat = getAdminPat();
     if (!pat) return;
 
     const issuer = process.env.ZITADEL_ISSUER || 'http://localhost:8080';
     try {
-        // Zitadel v2 API: list IdP links for the user
         const res = await fetch(`${issuer}/v2/users/${userId}/links`, {
             headers: { 'Authorization': `Bearer ${pat}` },
         });
-        if (res.ok) {
-            const data = await res.json() as { idpLinks?: Array<{ idpId?: string; idpName?: string; userId?: string }> };
-            const links = data.idpLinks || [];
-            if (links.length > 0) {
-                const link = links[0];
-                // Normalize the IdP name: "Google" → "google"
-                const provider = link.idpName?.toLowerCase().replace(/\s+/g, '_') || 'external_idp';
-                const externalUserId = link.userId || null;
-                await prisma.user.update({
-                    where: { id: userId },
-                    data: {
-                        authProvider: provider,
-                        ...(externalUserId && { providerId: externalUserId }),
-                    },
-                });
-                console.log(`[auth] Refined authProvider to '${provider}' for user ${userId}`);
-            }
-        }
+        if (!res.ok) return;
+
+        const data = await res.json() as { idpLinks?: Array<{ idpId?: string; idpName?: string; userId?: string }> };
+        const link = data.idpLinks?.[0];
+        if (!link) return;
+
+        const provider = link.idpName?.toLowerCase().replace(/\s+/g, '_') || 'external_idp';
+        await prisma.user.update({
+            where: { id: userId },
+            data: {
+                authProvider: provider,
+                ...(link.userId && { providerId: link.userId }),
+            },
+        });
+        console.log(`[auth] Refined authProvider to '${provider}' for user ${userId}`);
     } catch (err) {
         console.error('[auth] Failed to sync IdP from Zitadel:', err);
     }
 }
 
-// Fetch user's picture from Zitadel metadata and store in DB
-async function syncPictureFromZitadel(userId: string): Promise<void> {
+// Fetch user profile from Zitadel Management API (name, email, avatar).
+// This is the reliable source of truth — JWT tokens from Login V2 lack these claims.
+interface ZitadelUserProfile {
+    email: string | null;
+    name: string | null;
+    avatarUrl: string | null;
+}
+
+async function fetchZitadelUserProfile(userId: string): Promise<ZitadelUserProfile | null> {
     const pat = getAdminPat();
-    if (!pat) return;
+    if (!pat) return null;
 
     const issuer = process.env.ZITADEL_ISSUER || 'http://localhost:8080';
     try {
-        const res = await fetch(`${issuer}/management/v1/users/${userId}/metadata/picture`, {
+        const res = await fetch(`${issuer}/v2/users/${userId}`, {
             headers: { 'Authorization': `Bearer ${pat}` },
         });
-        if (res.ok) {
-            const data = await res.json() as { metadata?: { value?: string } };
-            if (data.metadata?.value) {
-                const pictureUrl = Buffer.from(data.metadata.value, 'base64').toString('utf-8');
-                if (pictureUrl && pictureUrl.startsWith('http')) {
-                    await prisma.user.update({
-                        where: { id: userId },
-                        data: { oauthProfileImage: pictureUrl },
-                    });
-                    console.log(`[auth] Synced picture from Zitadel metadata for user ${userId}`);
-                }
-            }
-        }
+        if (!res.ok) return null;
+
+        const data = await res.json() as {
+            user?: {
+                human?: {
+                    profile?: { displayName?: string; avatarUrl?: string };
+                    email?: { email?: string };
+                };
+            };
+        };
+        const human = data.user?.human;
+        return {
+            email: human?.email?.email || null,
+            name: human?.profile?.displayName || null,
+            avatarUrl: human?.profile?.avatarUrl || null,
+        };
     } catch (err) {
-        // Non-critical: don't break auth if picture sync fails
-        console.error('[auth] Failed to sync picture from Zitadel:', err);
+        console.error('[auth] Failed to fetch Zitadel user profile:', err);
+        return null;
     }
 }
 
 // Auto-provision user in DB after successful Zitadel JWT validation.
-// Works for all user types: internal Zitadel users, Google, Facebook, etc.
-// Zitadel assigns a unique sub for each user regardless of the identity provider.
+// Fetches real name/email from Zitadel Management API since Login V2 JWT lacks these claims.
 async function provisionUser(sub: string, payload: Record<string, unknown>): Promise<void> {
     const cached = userCache.get(sub);
     if (cached && Date.now() - cached < USER_CACHE_TTL) {
         return;
     }
 
-    const email = (payload.email as string) ||
-        (payload['urn:zitadel:iam:user:email'] as string) ||
-        `${sub}@zitadel.local`;
-    const name = (payload.name as string) ||
-        (payload['urn:zitadel:iam:user:human:first_name'] as string) ||
-        'User';
+    // Fetch real profile from Zitadel Management API (JWT from Login V2 lacks email/name)
+    const zitadelProfile = await fetchZitadelUserProfile(sub);
 
-    // Extract OAuth profile image from JWT payload
-    let oauthPicture: string | null = null;
+    const email = zitadelProfile?.email || (payload.email as string) || `${sub}@zitadel.local`;
+    const name = zitadelProfile?.name || (payload.name as string) || 'User';
 
-    // 1) Standard OIDC picture claim (from Google, Facebook, etc. via Zitadel)
-    if (typeof payload.picture === 'string' && payload.picture) {
-        oauthPicture = payload.picture;
-    }
+    // Picture sources (in priority order):
+    // 1. JWT picture claim (from Zitadel Action addPictureClaim, if it works)
+    // 2. Zitadel profile avatarUrl (if user uploaded one)
+    const oauthPicture = (typeof payload.picture === 'string' && payload.picture)
+        ? payload.picture
+        : (zitadelProfile?.avatarUrl || null);
 
-    // 2) Zitadel metadata object (from urn:zitadel:iam:user:metadata scope)
-    if (!oauthPicture) {
-        const metaObj = payload['urn:zitadel:iam:user:metadata'];
-        if (metaObj && typeof metaObj === 'object') {
-            const picB64 = (metaObj as Record<string, unknown>).picture;
-            if (typeof picB64 === 'string' && picB64) {
-                try {
-                    oauthPicture = Buffer.from(picB64, 'base64').toString('utf-8');
-                } catch {
-                    oauthPicture = picB64;
-                }
-            }
-        }
-    }
+    // Debug: log all picture-related data on provisioning
+    console.log(`[auth][DEBUG] User ${sub} provisioning:`, {
+        jwtPicture: payload.picture || '(none)',
+        zitadelAvatarUrl: zitadelProfile?.avatarUrl || '(none)',
+        resolvedPicture: oauthPicture || '(none)',
+        jwtClaims: Object.keys(payload),
+    });
 
-    // Determine provisional auth provider from JWT amr claim
     const authProvider = resolveAuthProvider(payload);
 
     try {
@@ -168,7 +158,7 @@ async function provisionUser(sub: string, payload: Record<string, unknown>): Pro
             update: {
                 email,
                 name,
-                ...(oauthPicture && { oauthProfileImage: oauthPicture })
+                ...(oauthPicture && { oauthProfileImage: oauthPicture }),
             },
             create: {
                 id: sub,
@@ -176,30 +166,19 @@ async function provisionUser(sub: string, payload: Record<string, unknown>): Pro
                 name,
                 authProvider,
                 providerId: sub,
-                ...(oauthPicture && { oauthProfileImage: oauthPicture })
+                ...(oauthPicture && { oauthProfileImage: oauthPicture }),
             },
         });
 
-        // Log OAuth picture extraction for debugging
-        if (oauthPicture) {
-            console.log(`[auth] Extracted OAuth picture from JWT payload for user ${sub}`);
-        }
-
-        // On first provisioning: refine authProvider via Management API (async, non-blocking)
-        // Also re-sync if still at default value (e.g. user existed before this feature)
         const isNewUser = !existing;
-        const needsIdpSync = isNewUser || existing?.authProvider === 'zitadel';
-        if (needsIdpSync && authProvider !== 'zitadel') {
-            syncIdpFromZitadel(sub).catch(e =>
-                console.error('[auth] syncIdp error:', e)
-            );
+
+        // Refine authProvider via Management API for external IdP users
+        if ((isNewUser || existing?.authProvider === 'zitadel') && authProvider !== 'zitadel') {
+            syncIdpFromZitadel(sub).catch(e => console.error('[auth] syncIdp error:', e));
         }
 
-        // Sync profile picture from Zitadel metadata if not already stored (fallback)
-        if (!existing?.oauthProfileImage && !oauthPicture) {
-            syncPictureFromZitadel(sub).catch(e =>
-                console.error('[auth] syncPicture error:', e)
-            );
+        if (zitadelProfile) {
+            console.log(`[auth] Provisioned user ${sub} from Zitadel API: ${name} <${email}>`);
         }
 
         userCache.set(sub, Date.now());
@@ -214,7 +193,7 @@ async function provisionUser(sub: string, payload: Record<string, unknown>): Pro
                         id: sub,
                         email: `${sub}@zitadel.local`,
                         name,
-                        authProvider: 'zitadel',
+                        authProvider,
                         providerId: sub,
                     },
                 });
@@ -236,36 +215,6 @@ const jwtCheck = auth({
 });
 
 export const checkJwt = async (req: Request, res: Response, next: NextFunction) => {
-    // Development/Demo Bypass
-    const authHeader = req.headers.authorization;
-    if (authHeader === 'Bearer demo-token') {
-        (req as AuthenticatedRequest).auth = {
-            payload: {
-                sub: 'demo-user-id',
-                scope: 'openid profile email'
-            }
-        };
-
-        try {
-            await prisma.user.upsert({
-                where: { id: 'demo-user-id' },
-                update: {},
-                create: {
-                    id: 'demo-user-id',
-                    email: 'demo@realstate.com',
-                    name: 'Demo User',
-                    authProvider: 'internal',
-                    identityVerified: true
-                }
-            });
-        } catch (err) {
-            console.error("Failed to ensure demo user exists", err);
-        }
-
-        return next();
-    }
-
-    // Zitadel JWT validation with user auto-provisioning
     return jwtCheck(req, res, (err?: any) => {
         if (err) {
             return next(err);

@@ -1,8 +1,8 @@
-# Caddy Configuration for Real Estate POC
+# Caddy Configuration for Real Estate
 # HTTPS Reverse Proxy for all services
 
 {
-	# Global options
+	# Global options (must be first)
 	auto_https off
 	admin off
 }
@@ -17,6 +17,16 @@ http://localhost {
 			header_up X-Forwarded-Proto {scheme}
 		}
 	}
+}
+
+# Zitadel Login V2 - Port 8081
+# Proxied through Caddy to strip frame-blocking headers, which allows embedding in an iframe
+http://localhost:8081 {
+	reverse_proxy realstate-zitadel-login:3000 {
+		header_up Host localhost
+	}
+	header -X-Frame-Options
+	header -Content-Security-Policy
 }
 
 # Web Frontend (Next.js) - Port 443 (default HTTPS)
@@ -56,7 +66,7 @@ https://localhost {
 # Zitadel OIDC - Port 8443
 https://localhost:8443 {
 	tls /certs/localhost.pem /certs/localhost-key.pem
-	
+
 	reverse_proxy http://realstate-zitadel:8080 {
 		header_up Host {host}
 		header_up X-Real-IP {remote}
@@ -65,12 +75,10 @@ https://localhost:8443 {
 	}
 }
 
-
-
 # MinIO Console - Port 9001
 https://localhost:9001 {
 	tls /certs/localhost.pem /certs/localhost-key.pem
-	
+
 	reverse_proxy http://realstate-minio:9001 {
 		header_up Host {host}
 		header_up X-Real-IP {remote}

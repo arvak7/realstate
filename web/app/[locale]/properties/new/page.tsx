@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signIn } from "next-auth/react";
 import { useRouter } from "@/i18n/navigation";
+import { usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
 import ImageUploader, { UploadedImage } from "@/app/[locale]/components/ImageUploader";
 import { useCatalogs } from "@/app/hooks/useCatalogs";
@@ -12,6 +13,7 @@ import ClauseSelectorPopup from "@/app/components/privacy/ClauseSelectorPopup";
 export default function NewPropertyPage() {
     const { data: session } = useSession();
     const router = useRouter();
+    const pathname = usePathname();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const t = useTranslations("newProperty");
@@ -119,7 +121,7 @@ export default function NewPropertyPage() {
                         {t("loginRequiredHint")}
                     </p>
                     <button
-                        onClick={() => router.push("/auth/signin")}
+                        onClick={() => signIn("zitadel", { callbackUrl: pathname })}
                         className="bg-primary-dark text-white px-8 py-3 rounded-full font-semibold hover:bg-primary transition-all duration-300 shadow-soft"
                     >
                         {tNav("signIn")}

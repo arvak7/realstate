@@ -38,7 +38,7 @@ services:
     command: server /data --console-address ":9001"
 
   zitadel:
-    image: ghcr.io/zitadel/zitadel:v4.10.0
+    image: ghcr.io/zitadel/zitadel:v4.11.1
     container_name: realstate-zitadel
     networks:
       - realstate-net
@@ -92,7 +92,7 @@ services:
       start_period: 10s
 
   zitadel-login:
-    image: ghcr.io/zitadel/zitadel-login:v4.10.0
+    image: ghcr.io/zitadel/zitadel-login:v4.11.1
     container_name: realstate-zitadel-login
     networks:
       - realstate-net
@@ -100,12 +100,15 @@ services:
       zitadel:
         condition: service_healthy
     environment:
-      ZITADEL_API_URL: http://realstate-zitadel:8080
+      ZITADEL_API_URL: http://zitadel:8080
       NEXT_PUBLIC_BASE_PATH: /ui/v2/login
       ZITADEL_SERVICE_USER_TOKEN_FILE: /loginkey/login-client.pat
       CUSTOM_REQUEST_HEADERS: "Host:localhost,X-Zitadel-Public-Host:localhost"
-    ports:
-      - "8081:3000"
+      # Force Node.js gRPC to use IPv4 (avoids EAI_AGAIN DNS failures in some Docker setups)
+      NODE_OPTIONS: "--dns-result-order=ipv4first"
+    dns:
+      - 127.0.0.11  # Docker embedded DNS (explicit, avoids transient resolution failures)
+    # Port NOT exposed directly - traffic goes through Caddy (which strips X-Frame-Options)
     volumes:
       - ./loginkey:/loginkey:ro
     restart: unless-stopped
@@ -118,6 +121,7 @@ services:
     ports:
       - "443:443"
       - "80:80"
+      - "8081:8081"
       - "8443:8443"
       - "9001:9001"
     volumes:

@@ -295,6 +295,52 @@ else
     log_warn "Google OAuth credentials not found. Skipping Google IdP setup."
 fi
 
+# ============================================================
+# TODO (PRODUCTION): Configure SMTP for email verification
+# ============================================================
+# Without SMTP, Zitadel skips email verification on registration
+# and allows users to log in immediately without confirming their
+# email address. This is acceptable for development but MUST be
+# configured before going to production.
+#
+# Required for:
+#   - Email verification on new registrations
+#   - Password reset emails
+#   - OTP / MFA codes via email
+#
+# Steps to enable:
+#   1. Choose an SMTP provider (Resend, SendGrid, Mailgun, etc.)
+#   2. Get SMTP credentials and set environment variables:
+#        SMTP_HOST=smtp.resend.com
+#        SMTP_PORT=465
+#        SMTP_USER=resend
+#        SMTP_PASSWORD=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+#        SMTP_FROM=noreply@yourdomain.com
+#        SMTP_FROM_NAME=Immobles
+#   3. Uncomment and adapt the block below, then delete the flag
+#      file to re-run setup: rm infra/.zitadel-configured
+#
+# API call to configure SMTP in Zitadel:
+#
+# SMTP_RESPONSE=$(curl $CURL_OPTS -X POST "$ZITADEL_URL/admin/v1/smtp" \
+#     -H "Content-Type: application/json" \
+#     -H "$AUTH_HEADER" \
+#     -d "{
+#         \"description\": \"Production SMTP\",
+#         \"host\": \"$SMTP_HOST:$SMTP_PORT\",
+#         \"user\": \"$SMTP_USER\",
+#         \"password\": \"$SMTP_PASSWORD\",
+#         \"from\": \"$SMTP_FROM\",
+#         \"fromName\": \"$SMTP_FROM_NAME\",
+#         \"tls\": true
+#     }")
+# if echo "$SMTP_RESPONSE" | jq -r '.id // empty' | grep -q .; then
+#     log_ok "SMTP configured"
+# else
+#     log_warn "SMTP config failed: $(echo "$SMTP_RESPONSE" | jq -r '.message // "unknown"')"
+# fi
+# ============================================================
+
 # Step 7: Setup Login V2 client (for existing installs where FIRSTINSTANCE vars didn't apply)
 LOGIN_PAT_DIR="$INFRA_DIR/loginkey"
 LOGIN_PAT_FILE="$LOGIN_PAT_DIR/login-client.pat"
@@ -374,6 +420,85 @@ else
     log_warn "Could not enable Login V2: $(echo "$LOGIN_V2_RESPONSE" | jq -r '.message // "unknown"')"
 fi
 
+# Step 7c: Configure Zitadel Actions for Google profile picture
+# Flow type mapping (verified empirically):
+#   Flow 1 = External Authentication
+#     Trigger 1 = Post Authentication (fires after external IdP auth, e.g. Google)
+#   Flow 2 = Complement Token
+#     Trigger 4 = Pre Userinfo Creation (fires before token is issued)
+#     Trigger 5 = Pre Access Token Creation
+log_info "Configuring Zitadel Actions for profile picture..."
+
+# Check if actions already assigned to the correct flows
+FLOW1_ACTIONS=$(curl $CURL_OPTS "$ZITADEL_URL/management/v1/flows/1" \
+    -H "$AUTH_HEADER" | jq -r '[.flow.triggerActions[]?.actions[]?.name] | join(",")' 2>/dev/null)
+FLOW2_ACTIONS=$(curl $CURL_OPTS "$ZITADEL_URL/management/v1/flows/2" \
+    -H "$AUTH_HEADER" | jq -r '[.flow.triggerActions[]?.actions[]?.name] | join(",")' 2>/dev/null)
+
+# Action 1: captures picture from Google IdP using ctx.getClaim and stores in user metadata
+# Flow: External Authentication (1), Trigger: Post Authentication (1)
+ACTION1_SCRIPT='function captureIdpPicture(ctx, api) { try { var picture = ctx.getClaim("picture"); if (picture) { api.v1.user.appendMetadata("picture", picture); } } catch(e) {} }'
+
+if echo "$FLOW1_ACTIONS" | grep -q "captureIdpPicture\|set_idp_picture_metadata"; then
+    log_ok "Capture picture action already assigned to External Authentication flow"
+else
+    ACTION1_PAYLOAD=$(jq -n \
+        --arg name "captureIdpPicture" \
+        --arg script "$ACTION1_SCRIPT" \
+        '{name: $name, script: $script, timeout: "10s", allowedToFail: true}')
+    ACTION1_RESPONSE=$(curl $CURL_OPTS -X POST "$ZITADEL_URL/management/v1/actions" \
+        -H "Content-Type: application/json" \
+        -H "$AUTH_HEADER" \
+        -d "$ACTION1_PAYLOAD")
+    ACTION1_ID=$(echo "$ACTION1_RESPONSE" | jq -r '.id // empty')
+    if [ -n "$ACTION1_ID" ]; then
+        log_ok "Action 'captureIdpPicture' created: $ACTION1_ID"
+        ASSIGN1_RESPONSE=$(curl $CURL_OPTS -X POST "$ZITADEL_URL/management/v1/flows/1/trigger/1/actions" \
+            -H "Content-Type: application/json" \
+            -H "$AUTH_HEADER" \
+            -d "{\"actionId\": \"$ACTION1_ID\"}")
+        if echo "$ASSIGN1_RESPONSE" | jq -r '.details // empty' | grep -q .; then
+            log_ok "Action 1 assigned to External Authentication / Post Authentication"
+        else
+            log_warn "Action 1 assignment: $(echo "$ASSIGN1_RESPONSE" | jq -r '.message // "unknown"')"
+        fi
+    else
+        log_warn "Could not create Action 1: $(echo "$ACTION1_RESPONSE" | jq -r '.message // "unknown"')"
+    fi
+fi
+
+# Action 2: reads picture metadata and injects as picture claim in token
+# Flow: Complement Token (2), Trigger: Pre Userinfo Creation (4)
+ACTION2_SCRIPT='function addPictureClaim(ctx, api) { try { if (ctx.v1.claims && ctx.v1.claims.picture) return; var md = ctx.v1.user.getMetadata(); if (!md || !md.metadata) return; for (var i = 0; i < md.metadata.length; i++) { if (md.metadata[i].key === "picture" && md.metadata[i].value) { var pic = md.metadata[i].value; if (typeof pic === "string" && pic.charAt(0) === "\"") { try { pic = JSON.parse(pic); } catch(e) {} } api.v1.claims.setClaim("picture", pic); return; } } } catch(e) {} }'
+
+if echo "$FLOW2_ACTIONS" | grep -q "addPictureClaim\|add_picture_claim_from_idp_metadata"; then
+    log_ok "Inject picture claim action already assigned to Complement Token flow"
+else
+    ACTION2_PAYLOAD=$(jq -n \
+        --arg name "addPictureClaim" \
+        --arg script "$ACTION2_SCRIPT" \
+        '{name: $name, script: $script, timeout: "10s", allowedToFail: true}')
+    ACTION2_RESPONSE=$(curl $CURL_OPTS -X POST "$ZITADEL_URL/management/v1/actions" \
+        -H "Content-Type: application/json" \
+        -H "$AUTH_HEADER" \
+        -d "$ACTION2_PAYLOAD")
+    ACTION2_ID=$(echo "$ACTION2_RESPONSE" | jq -r '.id // empty')
+    if [ -n "$ACTION2_ID" ]; then
+        log_ok "Action 'addPictureClaim' created: $ACTION2_ID"
+        ASSIGN2_RESPONSE=$(curl $CURL_OPTS -X POST "$ZITADEL_URL/management/v1/flows/2/trigger/4/actions" \
+            -H "Content-Type: application/json" \
+            -H "$AUTH_HEADER" \
+            -d "{\"actionId\": \"$ACTION2_ID\"}")
+        if echo "$ASSIGN2_RESPONSE" | jq -r '.details // empty' | grep -q .; then
+            log_ok "Action 2 assigned to Complement Token / Pre Userinfo Creation"
+        else
+            log_warn "Action 2 assignment: $(echo "$ASSIGN2_RESPONSE" | jq -r '.message // "unknown"')"
+        fi
+    else
+        log_warn "Could not create Action 2: $(echo "$ACTION2_RESPONSE" | jq -r '.message // "unknown"')"
+    fi
+fi
+
 # Step 8: Write credentials to env files and credentials file
 log_info "Writing credentials..."
 
@@ -388,6 +513,7 @@ ZITADEL_CLIENT_ID=$CLIENT_ID
 ZITADEL_CLIENT_SECRET=$CLIENT_SECRET
 ZITADEL_PROJECT_ID=$PROJECT_ID
 ZITADEL_ISSUER=$ZITADEL_ISSUER
+GOOGLE_IDP_ID=$GOOGLE_IDP_ID
 EOF
 
     # Update web/.env.local
@@ -402,6 +528,15 @@ EOF
         fi
         if grep -q '^ZITADEL_ISSUER=' "$WEB_ENV"; then
             sed -i "s|^ZITADEL_ISSUER=.*|ZITADEL_ISSUER=$ZITADEL_ISSUER|" "$WEB_ENV"
+        fi
+        if [ -n "$GOOGLE_IDP_ID" ]; then
+            if grep -q '^NEXT_PUBLIC_ZITADEL_GOOGLE_IDP_ID=' "$WEB_ENV"; then
+                sed -i "s|^NEXT_PUBLIC_ZITADEL_GOOGLE_IDP_ID=.*|NEXT_PUBLIC_ZITADEL_GOOGLE_IDP_ID=$GOOGLE_IDP_ID|" "$WEB_ENV"
+            else
+                echo "" >> "$WEB_ENV"
+                echo "# Zitadel Google IdP ID for direct Google login" >> "$WEB_ENV"
+                echo "NEXT_PUBLIC_ZITADEL_GOOGLE_IDP_ID=$GOOGLE_IDP_ID" >> "$WEB_ENV"
+            fi
         fi
         if ! grep -q '^NODE_TLS_REJECT_UNAUTHORIZED=' "$WEB_ENV"; then
             echo "" >> "$WEB_ENV"
