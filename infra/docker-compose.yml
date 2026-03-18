@@ -74,10 +74,10 @@ services:
       ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_PAT_EXPIRATIONDATE: "2029-01-01T00:00:00Z"
       # Login V2 feature (for fresh installs; existing installs use setup-zitadel.sh API calls)
       ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "true"
-      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: http://localhost:8081/ui/v2/login
-      ZITADEL_OIDC_DEFAULTLOGINURLV2: http://localhost:8081/ui/v2/login/login?authRequest=
-      ZITADEL_OIDC_DEFAULTLOGOUTURLV2: http://localhost:8081/ui/v2/login/logout?post_logout_redirect=
-      ZITADEL_SAML_DEFAULTLOGINURLV2: http://localhost:8081/ui/v2/login/login?samlRequest=
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: https://localhost/ui/v2/login
+      ZITADEL_OIDC_DEFAULTLOGINURLV2: https://localhost/ui/v2/login/login?authRequest=
+      ZITADEL_OIDC_DEFAULTLOGOUTURLV2: https://localhost/ui/v2/login/logout?post_logout_redirect=
+      ZITADEL_SAML_DEFAULTLOGINURLV2: https://localhost/ui/v2/login/login?samlRequest=
     command: start-from-init --masterkey "MasterkeyNeedsToBe32BytesLong123" --tlsMode disabled
     ports:
       - "8080:8080"
@@ -103,7 +103,7 @@ services:
       ZITADEL_API_URL: http://zitadel:8080
       NEXT_PUBLIC_BASE_PATH: /ui/v2/login
       ZITADEL_SERVICE_USER_TOKEN_FILE: /loginkey/login-client.pat
-      CUSTOM_REQUEST_HEADERS: "Host:localhost,X-Zitadel-Public-Host:localhost"
+      CUSTOM_REQUEST_HEADERS: "Host:localhost,X-Zitadel-Public-Host:localhost,X-Forwarded-Proto:https"
       # Force Node.js gRPC to use IPv4 (avoids EAI_AGAIN DNS failures in some Docker setups)
       NODE_OPTIONS: "--dns-result-order=ipv4first"
     dns:
@@ -121,7 +121,7 @@ services:
     ports:
       - "443:443"
       - "80:80"
-      - "8081:8081"
+      #- "8081:8081"  # Login V2 now served through port 443
       - "8443:8443"
       - "9001:9001"
     volumes:

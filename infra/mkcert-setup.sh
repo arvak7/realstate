@@ -48,6 +48,20 @@ mkcert localhost 127.0.0.1 ::1
 mv localhost+2.pem localhost.pem 2>/dev/null || true
 mv localhost+2-key.pem localhost-key.pem 2>/dev/null || true
 
+# Instal·lar CA a Firefox (si existeix)
+CAROOT=$(mkcert -CAROOT)
+FIREFOX_DB=$(find "$HOME" /home -name "cert9.db" -path "*firefox*" 2>/dev/null | head -1)
+if [ -n "$FIREFOX_DB" ]; then
+    FIREFOX_DIR=$(dirname "$FIREFOX_DB")
+    echo "🦊 Instal·lant CA a Firefox ($FIREFOX_DIR)..."
+    certutil -A -n "mkcert" -t "TC,," -i "$CAROOT/rootCA.pem" -d "sql:$FIREFOX_DIR" 2>/dev/null && \
+        echo "✅ CA instal·lada a Firefox" || \
+        echo "⚠️  No s'ha pogut instal·lar la CA a Firefox. Fes-ho manualment."
+else
+    echo "⚠️  No s'ha trobat perfil Firefox. Si uses Firefox, instal·la la CA manualment:"
+    echo "   certutil -A -n mkcert -t TC,, -i $CAROOT/rootCA.pem -d sql:<firefox-profile-dir>"
+fi
+
 echo ""
 echo "✅ Certificats generats correctament!"
 echo ""
@@ -55,6 +69,5 @@ echo "📁 Fitxers creats:"
 ls -lh localhost*.pem
 echo ""
 echo "🎯 Pròxims passos:"
-echo "  1. Configurar Caddy com a reverse proxy"
-echo "  2. Actualitzar variables d'entorn"
-echo "  3. Reiniciar serveis"
+echo "  1. Reiniciar Caddy: cd .. && docker compose restart caddy"
+echo "  2. Obrir https://localhost - ha de mostrar candau verd"

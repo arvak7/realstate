@@ -412,10 +412,10 @@ log_info "Enabling Login V2..."
 LOGIN_V2_RESPONSE=$(curl $CURL_OPTS -X PUT "$ZITADEL_URL/v2/features/instance" \
     -H "Content-Type: application/json" \
     -H "$AUTH_HEADER" \
-    -d '{"loginV2": {"required": true, "baseUri": "http://localhost:8081/ui/v2/login"}}')
+    -d '{"loginV2": {"required": true, "baseUri": "https://localhost/ui/v2/login"}}')
 
 if echo "$LOGIN_V2_RESPONSE" | jq -r '.details // empty' | grep -q .; then
-    log_ok "Login V2 enabled (base URI: http://localhost:8081/ui/v2/login)"
+    log_ok "Login V2 enabled (base URI: https://localhost/ui/v2/login)"
 else
     log_warn "Could not enable Login V2: $(echo "$LOGIN_V2_RESPONSE" | jq -r '.message // "unknown"')"
 fi

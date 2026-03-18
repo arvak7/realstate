@@ -173,8 +173,9 @@ MINIO_PORT=9000
 MINIO_ACCESS_KEY="minioadmin"
 MINIO_SECRET_KEY="minioadminpassword"
 MINIO_USE_SSL=false
-ZITADEL_ISSUER="https://localhost/auth"
-ZITADEL_AUDIENCE="your-client-id"
+ZITADEL_ISSUER="http://localhost:8080"
+ZITADEL_AUDIENCE="your-project-id"
+NODE_TLS_REJECT_UNAUTHORIZED=0
 PORT=3002
 EOF
 fi
@@ -217,12 +218,13 @@ cd "$WEB_DIR"
 if [ ! -f .env.local ]; then
     print_warning "No s'ha trobat .env.local al web, creant-ne un de bàsic..."
     cat > .env.local << 'EOF'
-NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_API_URL=https://localhost/api
 NEXTAUTH_URL=https://localhost
 NEXTAUTH_SECRET=your-secret-key-change-this-in-production
-ZITADEL_ISSUER=https://localhost/auth
+ZITADEL_ISSUER=http://localhost:8080
 ZITADEL_CLIENT_ID=your-client-id
 ZITADEL_CLIENT_SECRET=your-client-secret
+NODE_TLS_REJECT_UNAUTHORIZED=0
 EOF
 fi
 

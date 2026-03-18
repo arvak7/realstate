@@ -51,7 +51,7 @@ cd infra && docker-compose logs -f
        │  :5432       │  │   :9000/9001  │
        └──────────────┘  └───────────────┘
 
-Supporting: Zitadel API (:8080), Zitadel Login V2 (:8081), Elasticsearch (:9200), Redis (:6379), Caddy (:80/443/:8443)
+Supporting: Zitadel API (:8080), Zitadel Login V2 (via Caddy /ui/v2/login), Elasticsearch (:9200), Redis (:6379), Caddy (:443)
 ```
 
 ## Key Files
@@ -101,18 +101,32 @@ Supporting: Zitadel API (:8080), Zitadel Login V2 (:8081), Elasticsearch (:9200)
 
 Zitadel acts as identity broker. All authentication (Google, internal users, future providers like Facebook/Apple) goes through Zitadel, which issues its own JWT tokens. Single source of truth for identity.
 
-- **Frontend**: NextAuth with ZitadelProvider (primary) + Demo CredentialsProvider (dev fallback)
+- **Frontend**: NextAuth with ZitadelProvider (primary)
 - **Backend**: `express-oauth2-jwt-bearer` validates Zitadel JWTs + auto-provisions users in DB
 - **Auto-provisioning**: After JWT validation, middleware upserts user in User table (with 5-min cache)
 - **Demo bypass**: `Authorization: Bearer demo-token` still works for development
-- **Login UI**: Zitadel Login V2 (separate container on :8081) - shows Google, internal login, and any configured providers
+- **Login UI**: Zitadel Login V2 container, served via Caddy on `https://localhost/ui/v2/login/*` (same port 443 as frontend)
 - **Setup**: `infra/setup-zitadel.sh` configures Zitadel via Management API (idempotent, no UI needed)
 - **Token refresh**: NextAuth automatically refreshes expired Zitadel tokens via refresh_token grant
 - **Scalability**: To add new providers (Facebook, Apple, etc.), only add them to Zitadel - no frontend/backend changes needed
 
 ### Auth flow
 ```
-User → "Iniciar Sessió" → Zitadel Login V2 (:8081) → Google/email/internal → Zitadel JWT → Backend validates → User auto-created in DB
+User → "Iniciar Sessió" → https://localhost/ui/v2/login (Zitadel Login V2 via Caddy)
+  → Google/email/internal → Zitadel JWT → Backend validates → User auto-created in DB
+```
+
+### HTTPS & Certificates
+- **mkcert** generates locally-trusted certs (browser shows green padlock)
+- Caddy terminates TLS for all services on port 443
+- Login V2, frontend, backend API, and IdP callbacks all served through `https://localhost`
+- Run `cd infra && bash mkcert-setup.sh` to install/regenerate certs
+
+### Google OAuth Redirect URIs (Google Cloud Console)
+Only these two are needed:
+```
+https://localhost/api/auth/callback/google
+https://localhost/idps/callback
 ```
 
 ### Setup
@@ -120,8 +134,10 @@ User → "Iniciar Sessió" → Zitadel Login V2 (:8081) → Google/email/interna
 # Automated (runs during start-all.sh):
 ./infra/setup-zitadel.sh
 
-# Reconfigure:
+# Reconfigure (e.g. after Docker volume reset):
 rm infra/.zitadel-configured && ./infra/setup-zitadel.sh
+
+# Google OAuth requires GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in web/.env.local BEFORE running setup
 ```
 
 ## Features
@@ -171,16 +187,83 @@ Backend uses `.env`, frontend uses `.env.local`. Key variables:
 
 ## Services & Ports
 
-| Service            | Port  | Credentials                    |
-|--------------------|-------|--------------------------------|
-| Frontend           | 3000  | -                              |
-| Backend            | 3002  | -                              |
-| PostgreSQL         | 5432  | postgres / postgrespassword    |
-| MinIO Console      | 9001  | minioadmin / minioadminpassword|
-| Zitadel API        | 8080  | admin / Admin123!              |
-| Zitadel Login V2   | 8081  | -                              |
-| Zitadel (Caddy)    | 8443  | HTTPS proxy to :8080           |
-| Caddy (HTTPS)      | 443   | https://localhost              |
+| Service            | Port  | URL                              | Credentials                    |
+|--------------------|-------|----------------------------------|--------------------------------|
+| Caddy (HTTPS)      | 443   | https://localhost                 | -                              |
+| Frontend           | 3000  | https://localhost (via Caddy)     | -                              |
+| Backend API        | 3002  | https://localhost/api (via Caddy) | -                              |
+| Zitadel Login V2   | -     | https://localhost/ui/v2/login     | -                              |
+| Zitadel API        | 8080  | http://localhost:8080             | admin / Admin123!              |
+| Zitadel (Caddy)    | 8443  | https://localhost:8443            | HTTPS proxy to :8080           |
+| PostgreSQL         | 5432  | -                                | postgres / postgrespassword    |
+| MinIO Console      | 9001  | https://localhost:9001            | minioadmin / minioadminpassword|
+
+## Fresh Install Checklist (ordinador nou)
+
+Passos necessaris per posar en marxa el projecte en un ordinador net:
+
+### Prerequisites del sistema
+- [ ] **Docker & Docker Compose** - `sudo apt install docker.io docker-compose-v2` (o Docker Desktop)
+- [ ] **Node.js 20+** - recomanat via [nvm](https://github.com/nvm-sh/nvm): `nvm install 20`
+- [ ] **Git** - `sudo apt install git`
+
+### 1. Clonar i instal·lar dependències
+```bash
+git clone <repo-url> && cd realstate
+cd backend && npm install && cd ..
+cd web && npm install && cd ..
+```
+
+### 2. Certificats HTTPS locals (mkcert)
+Imprescindible perquè el browser no mostri "Not Secured" i l'auth funcioni sense errors TLS.
+```bash
+cd infra && bash mkcert-setup.sh && cd ..
+```
+Això:
+- Instal·la `mkcert` i `libnss3-tools` (per Firefox)
+- Crea una CA local i la registra al system trust store
+- Genera `infra/certs/localhost.pem` i `localhost-key.pem` signats per la CA local
+
+**Important**: Per Firefox, cal instal·lar la CA manualment al perfil:
+```bash
+CAROOT=$(mkcert -CAROOT)
+certutil -A -n "mkcert" -t "TC,," -i "$CAROOT/rootCA.pem" \
+  -d "sql:$(find ~/.mozilla/firefox -name cert9.db -printf '%h\n' | head -1)"
+```
+
+### 3. Arrencar serveis i configurar Zitadel
+```bash
+./start-all.sh
+```
+La primera execució:
+- Arrenca Docker (PostgreSQL, Redis, Elasticsearch, MinIO, Zitadel, Caddy)
+- Crea `.env` / `.env.local` amb placeholders si no existeixen
+- Executa `infra/setup-zitadel.sh` que:
+  - Crea el projecte OIDC i l'app a Zitadel
+  - Escriu els `ZITADEL_CLIENT_ID`, `ZITADEL_CLIENT_SECRET`, `ZITADEL_ISSUER` correctes als `.env`
+  - Configura Google IdP (si hi ha credencials Google OAuth a `web/.env.local`)
+
+### 4. Google OAuth (opcional)
+Per habilitar login amb Google, afegeix a `web/.env.local` **abans** d'executar `setup-zitadel.sh`:
+```
+GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=xxx
+```
+Després reconfigura: `rm infra/.zitadel-configured && ./infra/setup-zitadel.sh`
+
+### 5. Verificar
+- `https://localhost` - Frontend (ha de mostrar candau verd al browser)
+- `https://localhost/api/health` - Backend health check
+- Clicar "Iniciar Sessió" per testejar l'auth amb Zitadel
+
+### Troubleshooting comú
+| Problema | Causa | Solució |
+|----------|-------|---------|
+| Browser diu "Not Secured" | Certs auto-signats (no mkcert) | `cd infra && bash mkcert-setup.sh` + reiniciar Caddy |
+| Auth falla amb "OAuthSignin" | Client ID inexistent a Zitadel | `rm infra/.zitadel-configured && ./infra/setup-zitadel.sh` |
+| `self-signed certificate` als logs | `NODE_TLS_REJECT_UNAUTHORIZED=0` no posat | Verificar `.env` i `.env.local` |
+| Port 3000/3002 ocupat | Procés anterior no aturat | `./stop-all.sh` o `sudo kill $(lsof -ti:3000)` |
+| Zitadel volumes reset | Docker volumes esborrats | Esborrar flag + re-setup: `rm infra/.zitadel-configured && ./infra/setup-zitadel.sh` |
 
 ## Important Rules for Claude
 

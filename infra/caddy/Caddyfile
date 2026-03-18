@@ -1,5 +1,5 @@
 # Caddy Configuration for Real Estate
-# HTTPS Reverse Proxy for all services
+# HTTPS Reverse Proxy - everything through port 443
 
 {
 	# Global options (must be first)
@@ -7,71 +7,65 @@
 	admin off
 }
 
-# HTTP handler - Zitadel IdP callback (Google OAuth redirect lands here)
+# HTTP handler - redirect to HTTPS
 http://localhost {
-	handle /idps/* {
-		reverse_proxy http://realstate-zitadel:8080 {
-			header_up Host {host}
-			header_up X-Real-IP {remote}
-			header_up X-Forwarded-For {remote}
-			header_up X-Forwarded-Proto {scheme}
-		}
-	}
+	redir https://localhost{uri} permanent
 }
 
-# Zitadel Login V2 - Port 8081
-# Proxied through Caddy to strip frame-blocking headers, which allows embedding in an iframe
-http://localhost:8081 {
-	reverse_proxy realstate-zitadel-login:3000 {
-		header_up Host localhost
-	}
-	header -X-Frame-Options
-	header -Content-Security-Policy
-}
-
-# Web Frontend (Next.js) - Port 443 (default HTTPS)
+# Main HTTPS entry point - all services through port 443
 https://localhost {
 	tls /certs/localhost.pem /certs/localhost-key.pem
 
-	# NextAuth routes must be handled by Next.js
+	# Zitadel IdP callbacks (Google OAuth, etc.) → Zitadel API
+	handle /idps/* {
+		reverse_proxy http://realstate-zitadel:8080 {
+			header_up Host localhost
+			header_up X-Forwarded-Proto https
+		}
+	}
+
+	# Zitadel Login V2 UI → Login V2 container
+	handle /ui/v2/login/* {
+		reverse_proxy realstate-zitadel-login:3000 {
+			header_up Host localhost
+			header_up X-Forwarded-Proto https
+		}
+		header -X-Frame-Options
+		header -Content-Security-Policy
+	}
+
+	# NextAuth routes → Next.js
 	handle /api/auth/* {
 		reverse_proxy http://host.docker.internal:3000 {
 			header_up Host {host}
-			header_up X-Real-IP {remote}
-			header_up X-Forwarded-For {remote}
-			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Proto https
 		}
 	}
 
-	# Backend API routes
+	# Backend API routes → Express
 	handle_path /api/* {
 		reverse_proxy http://host.docker.internal:3002 {
 			header_up Host {host}
-			header_up X-Real-IP {remote}
-			header_up X-Forwarded-For {remote}
-			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Proto https
 		}
 	}
 
+	# Everything else → Next.js frontend
 	handle {
 		reverse_proxy http://host.docker.internal:3000 {
 			header_up Host {host}
-			header_up X-Real-IP {remote}
-			header_up X-Forwarded-For {remote}
-			header_up X-Forwarded-Proto {scheme}
+			header_up X-Forwarded-Proto https
 		}
 	}
 }
 
-# Zitadel OIDC - Port 8443
+# Zitadel OIDC API - Port 8443
 https://localhost:8443 {
 	tls /certs/localhost.pem /certs/localhost-key.pem
 
 	reverse_proxy http://realstate-zitadel:8080 {
 		header_up Host {host}
-		header_up X-Real-IP {remote}
-		header_up X-Forwarded-For {remote}
-		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Proto https
 	}
 }
 
@@ -81,8 +75,6 @@ https://localhost:9001 {
 
 	reverse_proxy http://realstate-minio:9001 {
 		header_up Host {host}
-		header_up X-Real-IP {remote}
-		header_up X-Forwarded-For {remote}
-		header_up X-Forwarded-Proto {scheme}
+		header_up X-Forwarded-Proto https
 	}
 }
