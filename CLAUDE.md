@@ -6,14 +6,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Real Estate Platform - A multi-platform real estate application with API-First architecture. Shared backend serving web (Next.js) and mobile (Flutter) clients. Uses Zitadel as identity broker for OIDC authentication (Google, internal users, and future providers).
 
+## Environments
+
+| Entorn | Script | Configuració | Certs SSL |
+|--------|--------|--------------|-----------|
+| **DEV** | `./start-all.sh` | `infra/.env` (`APP_ENV=DEV`, `DOMAIN=localhost`) | mkcert (local, trusted) |
+| **PRE** | `./deploy.sh` | `infra/.env` (`APP_ENV=PRE`, `DOMAIN=staging.xxx.com`) | Let's Encrypt (Caddy auto) |
+| **PRO** | `./deploy.sh` | `infra/.env` (`APP_ENV=PRO`, `DOMAIN=xxx.com`) | Let's Encrypt (Caddy auto) |
+
+- **DEV**: frontend i backend corren al host (Node.js local), infraestructura via Docker
+- **PRE/PRO**: frontend i backend corren via PM2 al servidor, infraestructura via Docker
+- El `Caddyfile` es genera automàticament de `Caddyfile.dev` o `Caddyfile.prod` via `envsubst`
+
 ## Commands
 
-### Start Everything
+### DEV (local)
 ```bash
-./start-all.sh    # Starts Docker services, backend (port 3002), frontend (port 3000)
-./stop-all.sh     # Stop all services
-./status.sh       # Check service status
+./start-all.sh    # Arrenca Docker + backend + frontend
+./stop-all.sh     # Atura tots els serveis
+./status.sh       # Estat dels serveis
 ```
+
+### PRE / PRO (Hostinger VPS)
+```bash
+./deploy.sh       # Pull + build + Docker + PM2 (llegeix infra/.env)
+```
+Veure `DEPLOYMENT.md` per la configuració inicial del VPS.
 
 ### Backend (backend/)
 ```bash
