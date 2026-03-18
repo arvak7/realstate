@@ -22,7 +22,8 @@ Real Estate Platform - A multi-platform real estate application with API-First a
 
 ### DEV (local)
 ```bash
-./start-all.sh    # Arrenca Docker + backend + frontend
+./install.sh      # PRIMERA VEGADA: deps + .env + mkcert + arrenca tot + seed
+./start-all.sh    # Ús diari: arrenca Docker + backend + frontend (+ seed automàtic 1a vegada)
 ./stop-all.sh     # Atura tots els serveis
 ./status.sh       # Estat dels serveis
 ```

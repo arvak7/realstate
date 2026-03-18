@@ -95,12 +95,22 @@ else
     print_ok "Zitadel already configured (skipping)"
 fi
 
-# Step 8: Run DB migrations
+# Step 8: Run DB migrations + seed
 print_info "Pas 8/8: Running database migrations..."
 cd "$BACKEND_DIR"
 npm run prisma:migrate -- --name "deploy-$(date +%Y%m%d)" 2>/dev/null || \
     npx prisma migrate deploy
 print_ok "Migrations applied"
+
+# Seed (first time only — uses a flag file to skip on subsequent deploys)
+if [ ! -f "$PROJECT_DIR/.db-seeded" ]; then
+    print_info "Seeding database (first time)..."
+    cd "$BACKEND_DIR" && npx prisma db seed
+    touch "$PROJECT_DIR/.db-seeded"
+    print_ok "Database seeded"
+else
+    print_ok "Database already seeded (skipping)"
+fi
 
 # Start/restart application with PM2
 if command -v pm2 >/dev/null 2>&1; then

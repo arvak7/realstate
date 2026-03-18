@@ -208,6 +208,16 @@ npm run prisma:migrate -- --name init || print_warning "Les migracions ja poden 
 
 print_success "Migracions de Prisma aplicades"
 
+# Pas 4.5: Seed de la base de dades (primera vegada)
+if [ ! -f "$PROJECT_DIR/.db-seeded" ]; then
+    print_message "Pas 4.5/7: Seeding de la base de dades..."
+    npm run seed
+    touch "$PROJECT_DIR/.db-seeded"
+    print_success "Base de dades inicialitzada amb dades de catàleg"
+else
+    print_success "Base de dades ja inicialitzada (saltant seed)"
+fi
+
 # Pas 5: Arrencar el backend
 print_message "Pas 5/7: Arrencant el backend..."
 cd "$BACKEND_DIR"
