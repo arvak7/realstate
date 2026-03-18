@@ -10,7 +10,7 @@ services:
       - realstate-net
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: realstate
     ports:
       - "5432:5432"
@@ -29,8 +29,8 @@ services:
     networks:
       - realstate-net
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadminpassword
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
     ports:
       - "9000:9000"
     volumes:
@@ -53,15 +53,15 @@ services:
       ZITADEL_DATABASE_POSTGRES_USER_PASSWORD: zitadelpassword
       ZITADEL_DATABASE_POSTGRES_USER_SSL_MODE: disable
       ZITADEL_DATABASE_POSTGRES_ADMIN_USERNAME: postgres
-      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: postgrespassword
+      ZITADEL_DATABASE_POSTGRES_ADMIN_PASSWORD: ${POSTGRES_PASSWORD}
       ZITADEL_DATABASE_POSTGRES_ADMIN_SSL_MODE: disable
-      ZITADEL_EXTERNALSECURE: "false"
+      ZITADEL_EXTERNALSECURE: "${ZITADEL_EXTERNALSECURE:-false}"
       ZITADEL_TLS_ENABLED: "false"
-      ZITADEL_EXTERNALPORT: 8080
-      ZITADEL_EXTERNALDOMAIN: localhost
+      ZITADEL_EXTERNALPORT: ${ZITADEL_EXTERNALPORT:-8080}
+      ZITADEL_EXTERNALDOMAIN: ${DOMAIN}
       ZITADEL_FIRSTINSTANCE_ORG_NAME: RealEstate
       ZITADEL_FIRSTINSTANCE_ORG_HUMAN_USERNAME: admin
-      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: Admin123!
+      ZITADEL_FIRSTINSTANCE_ORG_HUMAN_PASSWORD: ${ZITADEL_ADMIN_PASSWORD}
       # Admin machine user for automated API access (created on first init only)
       ZITADEL_FIRSTINSTANCE_PATPATH: /machinekey/admin.pat
       ZITADEL_FIRSTINSTANCE_ORG_MACHINE_MACHINE_USERNAME: zitadel-admin-sa
@@ -74,11 +74,11 @@ services:
       ZITADEL_FIRSTINSTANCE_ORG_LOGINCLIENT_PAT_EXPIRATIONDATE: "2029-01-01T00:00:00Z"
       # Login V2 feature (for fresh installs; existing installs use setup-zitadel.sh API calls)
       ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_REQUIRED: "true"
-      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: https://localhost/ui/v2/login
-      ZITADEL_OIDC_DEFAULTLOGINURLV2: https://localhost/ui/v2/login/login?authRequest=
-      ZITADEL_OIDC_DEFAULTLOGOUTURLV2: https://localhost/ui/v2/login/logout?post_logout_redirect=
-      ZITADEL_SAML_DEFAULTLOGINURLV2: https://localhost/ui/v2/login/login?samlRequest=
-    command: start-from-init --masterkey "MasterkeyNeedsToBe32BytesLong123" --tlsMode disabled
+      ZITADEL_DEFAULTINSTANCE_FEATURES_LOGINV2_BASEURI: https://${DOMAIN}/ui/v2/login
+      ZITADEL_OIDC_DEFAULTLOGINURLV2: https://${DOMAIN}/ui/v2/login/login?authRequest=
+      ZITADEL_OIDC_DEFAULTLOGOUTURLV2: https://${DOMAIN}/ui/v2/login/logout?post_logout_redirect=
+      ZITADEL_SAML_DEFAULTLOGINURLV2: https://${DOMAIN}/ui/v2/login/login?samlRequest=
+    command: start-from-init --masterkey "${ZITADEL_MASTERKEY}" --tlsMode disabled
     ports:
       - "8080:8080"
     volumes:
@@ -103,7 +103,7 @@ services:
       ZITADEL_API_URL: http://zitadel:8080
       NEXT_PUBLIC_BASE_PATH: /ui/v2/login
       ZITADEL_SERVICE_USER_TOKEN_FILE: /loginkey/login-client.pat
-      CUSTOM_REQUEST_HEADERS: "Host:localhost,X-Zitadel-Public-Host:localhost,X-Forwarded-Proto:https"
+      CUSTOM_REQUEST_HEADERS: "Host:${DOMAIN},X-Zitadel-Public-Host:${DOMAIN},X-Forwarded-Proto:https"
       # Force Node.js gRPC to use IPv4 (avoids EAI_AGAIN DNS failures in some Docker setups)
       NODE_OPTIONS: "--dns-result-order=ipv4first"
     dns:
@@ -127,6 +127,8 @@ services:
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile
       - ./certs:/certs:ro
+      - caddy_data:/data
+      - caddy_config:/config
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped
@@ -172,3 +174,5 @@ volumes:
   minio-data:
   elasticsearch-data:
   redis-data:
+  caddy_data:
+  caddy_config:

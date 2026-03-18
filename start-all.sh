@@ -19,6 +19,22 @@ INFRA_DIR="$PROJECT_DIR/infra"
 BACKEND_DIR="$PROJECT_DIR/backend"
 WEB_DIR="$PROJECT_DIR/web"
 
+# Load environment configuration from infra/.env
+if [ -f "$INFRA_DIR/.env" ]; then
+    set -a
+    source "$INFRA_DIR/.env"
+    set +a
+else
+    print_warning() { echo -e "\033[1;33m[$(date +'%H:%M:%S')] ⚠\033[0m $1"; }
+    print_warning "No s'ha trobat infra/.env. Copia infra/.env.example a infra/.env i configura'l."
+    print_warning "Usant valors per defecte (DEV/localhost)"
+fi
+
+# Defaults
+DOMAIN="${DOMAIN:-localhost}"
+APP_ENV="${APP_ENV:-DEV}"
+SSL_MODE="${SSL_MODE:-mkcert}"
+
 # Ensure we use NVM node if available (fixes prisma compilation errors with old system node)
 if [ -d "$HOME/.nvm/versions/node" ]; then
     LATEST_NODE=$(ls -td "$HOME/.nvm/versions/node"/v* | head -1)
@@ -121,6 +137,25 @@ fi
 
 print_success "Neteja completada"
 
+# Pas 1.5: Generate Caddyfile from template
+if ! command -v envsubst >/dev/null 2>&1; then
+    print_warning "envsubst no trobat. Instal·la gettext-base: apt install gettext-base"
+    print_warning "Usant Caddyfile existent sense substituir variables."
+else
+    if [ "$SSL_MODE" = "letsencrypt" ]; then
+        CADDY_TEMPLATE="$INFRA_DIR/caddy/Caddyfile.prod"
+    else
+        CADDY_TEMPLATE="$INFRA_DIR/caddy/Caddyfile.dev"
+    fi
+
+    if [ -f "$CADDY_TEMPLATE" ]; then
+        envsubst < "$CADDY_TEMPLATE" > "$INFRA_DIR/caddy/Caddyfile"
+        print_success "Caddyfile generat (${SSL_MODE}, domini: ${DOMAIN})"
+    else
+        print_warning "Template $CADDY_TEMPLATE no trobat. Usant Caddyfile existent."
+    fi
+fi
+
 # Pas 2: Arrencar serveis Docker
 print_message "Pas 2/7: Arrencant serveis Docker..."
 cd "$INFRA_DIR"
@@ -163,21 +198,9 @@ cd "$BACKEND_DIR"
 
 # Comprovar si existeix .env
 if [ ! -f .env ]; then
-    print_warning "No s'ha trobat .env al backend, creant-ne un de bàsic..."
-    cat > .env << 'EOF'
-DATABASE_URL="postgresql://postgres:postgrespassword@localhost:5432/realstate?schema=public"
-ELASTICSEARCH_NODE="http://localhost:9200"
-REDIS_URL="redis://localhost:6379"
-MINIO_ENDPOINT="localhost"
-MINIO_PORT=9000
-MINIO_ACCESS_KEY="minioadmin"
-MINIO_SECRET_KEY="minioadminpassword"
-MINIO_USE_SSL=false
-ZITADEL_ISSUER="http://localhost:8080"
-ZITADEL_AUDIENCE="your-project-id"
-NODE_TLS_REJECT_UNAUTHORIZED=0
-PORT=3002
-EOF
+    print_error "No s'ha trobat backend/.env. Copia backend/.env.example i configura'l."
+    print_error "Veure: cp backend/.env.example backend/.env"
+    exit 1
 fi
 
 # Aplicar migracions
@@ -216,16 +239,9 @@ cd "$WEB_DIR"
 
 # Comprovar si existeix .env.local
 if [ ! -f .env.local ]; then
-    print_warning "No s'ha trobat .env.local al web, creant-ne un de bàsic..."
-    cat > .env.local << 'EOF'
-NEXT_PUBLIC_API_URL=https://localhost/api
-NEXTAUTH_URL=https://localhost
-NEXTAUTH_SECRET=your-secret-key-change-this-in-production
-ZITADEL_ISSUER=http://localhost:8080
-ZITADEL_CLIENT_ID=your-client-id
-ZITADEL_CLIENT_SECRET=your-client-secret
-NODE_TLS_REJECT_UNAUTHORIZED=0
-EOF
+    print_error "No s'ha trobat web/.env.local. Copia web/.env.example i configura'l."
+    print_error "Veure: cp web/.env.example web/.env.local"
+    exit 1
 fi
 
 # Comprovar si el port 3000 està lliure
@@ -260,11 +276,11 @@ echo -e "${GREEN}║          Tots els serveis arrencats!           ║${NC}"
 echo -e "${GREEN}║                                                ║${NC}"
 echo -e "${GREEN}╚════════════════════════════════════════════════╝${NC}"
 echo ""
-echo -e "${BLUE}Serveis disponibles:${NC}"
-echo -e "  ${GREEN}•${NC} Frontend:       https://localhost"
-echo -e "  ${GREEN}•${NC} Backend API:    https://localhost:3001 (proxied to 3002)"
-echo -e "  ${GREEN}•${NC} Zitadel Auth:   https://localhost/auth"
-echo -e "  ${GREEN}•${NC} MinIO Console:  http://localhost:9001"
+echo -e "${BLUE}Serveis disponibles (${APP_ENV}):${NC}"
+echo -e "  ${GREEN}•${NC} Frontend:       https://${DOMAIN}"
+echo -e "  ${GREEN}•${NC} Backend API:    https://${DOMAIN}/api"
+echo -e "  ${GREEN}•${NC} Login:          https://${DOMAIN}/ui/v2/login"
+echo -e "  ${GREEN}•${NC} MinIO Console:  https://${DOMAIN}:9001"
 echo -e "  ${GREEN}•${NC} Elasticsearch:  http://localhost:9200"
 echo -e "  ${GREEN}•${NC} Redis:          localhost:6379"
 echo -e "  ${GREEN}•${NC} PostgreSQL:     localhost:5432"

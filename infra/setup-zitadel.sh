@@ -20,6 +20,16 @@ CURL_OPTS="-s" # silent
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 INFRA_DIR="$PROJECT_DIR/infra"
+
+# Load environment from infra/.env if exists
+if [ -f "$INFRA_DIR/.env" ]; then
+    set -a
+    source "$INFRA_DIR/.env"
+    set +a
+fi
+
+# Defaults
+DOMAIN="${DOMAIN:-localhost}"
 FLAG_FILE="$INFRA_DIR/.zitadel-configured"
 CREDS_FILE="$INFRA_DIR/.zitadel-credentials"
 PAT_FILE="$INFRA_DIR/machinekey/admin.pat"
@@ -147,27 +157,35 @@ if [ -n "$APP_ID" ]; then
     CLIENT_ID=$(echo "$APP_DETAIL" | jq -r '.app.oidcConfig.clientId // empty')
     log_warn "Existing app found. Client secret cannot be retrieved. Delete app and rerun to get new credentials."
 else
+    # Build redirect URIs: always include the configured domain; add localhost:3000 for dev
+    REDIRECT_URIS="\"https://${DOMAIN}/api/auth/callback/zitadel\""
+    POST_LOGOUT_URIS="\"https://${DOMAIN}\""
+    if [ "${APP_ENV:-DEV}" = "DEV" ] && [ "$DOMAIN" != "localhost" ]; then
+        REDIRECT_URIS="$REDIRECT_URIS, \"http://localhost:3000/api/auth/callback/zitadel\""
+        POST_LOGOUT_URIS="$POST_LOGOUT_URIS, \"http://localhost:3000\""
+    elif [ "$DOMAIN" = "localhost" ]; then
+        REDIRECT_URIS="$REDIRECT_URIS, \"http://localhost:3000/api/auth/callback/zitadel\""
+        POST_LOGOUT_URIS="$POST_LOGOUT_URIS, \"http://localhost:3000\""
+    fi
+
     APP_RESPONSE=$(curl $CURL_OPTS -X POST "$ZITADEL_URL/management/v1/projects/$PROJECT_ID/apps/oidc" \
         -H "Content-Type: application/json" \
         -H "$AUTH_HEADER" \
-        -d '{
-            "name": "RealEstate Web",
-            "redirectUris": [
-                "https://localhost/api/auth/callback/zitadel",
-                "http://localhost:3000/api/auth/callback/zitadel"
-            ],
-            "responseTypes": ["OIDC_RESPONSE_TYPE_CODE"],
-            "grantTypes": ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE", "OIDC_GRANT_TYPE_REFRESH_TOKEN"],
-            "appType": "OIDC_APP_TYPE_WEB",
-            "authMethodType": "OIDC_AUTH_METHOD_TYPE_POST",
-            "postLogoutRedirectUris": ["https://localhost", "http://localhost:3000"],
-            "devMode": true,
-            "accessTokenType": "OIDC_TOKEN_TYPE_JWT",
-            "accessTokenRoleAssertion": true,
-            "idTokenRoleAssertion": true,
-            "idTokenUserinfoAssertion": true,
-            "clockSkew": "5s"
-        }')
+        -d "{
+            \"name\": \"RealEstate Web\",
+            \"redirectUris\": [$REDIRECT_URIS],
+            \"responseTypes\": [\"OIDC_RESPONSE_TYPE_CODE\"],
+            \"grantTypes\": [\"OIDC_GRANT_TYPE_AUTHORIZATION_CODE\", \"OIDC_GRANT_TYPE_REFRESH_TOKEN\"],
+            \"appType\": \"OIDC_APP_TYPE_WEB\",
+            \"authMethodType\": \"OIDC_AUTH_METHOD_TYPE_POST\",
+            \"postLogoutRedirectUris\": [$POST_LOGOUT_URIS],
+            \"devMode\": true,
+            \"accessTokenType\": \"OIDC_TOKEN_TYPE_JWT\",
+            \"accessTokenRoleAssertion\": true,
+            \"idTokenRoleAssertion\": true,
+            \"idTokenUserinfoAssertion\": true,
+            \"clockSkew\": \"5s\"
+        }")
 
     CLIENT_ID=$(echo "$APP_RESPONSE" | jq -r '.clientId // empty')
     CLIENT_SECRET=$(echo "$APP_RESPONSE" | jq -r '.clientSecret // empty')
@@ -183,13 +201,15 @@ fi
 log_info "Configuring Google Identity Provider..."
 
 WEB_ENV="$PROJECT_DIR/web/.env.local"
-if [ -f "$WEB_ENV" ]; then
+
+# Read Google credentials (prefer infra/.env already sourced, fallback to web/.env.local)
+if [ -z "${GOOGLE_CLIENT_ID:-}" ] && [ -f "$WEB_ENV" ]; then
     GOOGLE_CLIENT_ID=$(grep '^GOOGLE_CLIENT_ID=' "$WEB_ENV" | cut -d'=' -f2- || true)
     GOOGLE_CLIENT_SECRET=$(grep '^GOOGLE_CLIENT_SECRET=' "$WEB_ENV" | cut -d'=' -f2- || true)
-else
-    log_warn "web/.env.local not found. Skipping Google IdP setup."
-    GOOGLE_CLIENT_ID=""
-    GOOGLE_CLIENT_SECRET=""
+fi
+
+if [ -z "${GOOGLE_CLIENT_ID:-}" ]; then
+    log_warn "Google credentials not found in infra/.env or web/.env.local. Skipping Google IdP setup."
 fi
 
 GOOGLE_IDP_ID=""
@@ -409,13 +429,14 @@ fi
 
 # Step 7b: Enable Login V2 feature
 log_info "Enabling Login V2..."
+LOGIN_V2_BASE_URI="https://${DOMAIN}/ui/v2/login"
 LOGIN_V2_RESPONSE=$(curl $CURL_OPTS -X PUT "$ZITADEL_URL/v2/features/instance" \
     -H "Content-Type: application/json" \
     -H "$AUTH_HEADER" \
-    -d '{"loginV2": {"required": true, "baseUri": "https://localhost/ui/v2/login"}}')
+    -d "{\"loginV2\": {\"required\": true, \"baseUri\": \"${LOGIN_V2_BASE_URI}\"}}")
 
 if echo "$LOGIN_V2_RESPONSE" | jq -r '.details // empty' | grep -q .; then
-    log_ok "Login V2 enabled (base URI: https://localhost/ui/v2/login)"
+    log_ok "Login V2 enabled (base URI: ${LOGIN_V2_BASE_URI})"
 else
     log_warn "Could not enable Login V2: $(echo "$LOGIN_V2_RESPONSE" | jq -r '.message // "unknown"')"
 fi
