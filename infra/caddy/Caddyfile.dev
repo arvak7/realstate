@@ -16,6 +16,14 @@ http://${DOMAIN} {
 https://${DOMAIN} {
     tls /certs/localhost.pem /certs/localhost-key.pem
 
+    # MinIO public file access (images, uploads)
+    handle /files/* {
+        uri strip_prefix /files
+        reverse_proxy http://realstate-minio:9000 {
+            header_up Host {host}
+        }
+    }
+
     # Zitadel IdP callbacks (Google OAuth etc.)
     handle /idps/* {
         reverse_proxy http://realstate-zitadel:8080 {

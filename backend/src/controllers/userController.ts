@@ -106,8 +106,9 @@ export const generateProfilePhotoUploadUrl = async (req: AuthenticatedRequest, r
         // Generate presigned URL for upload (valid for 5 minutes)
         const uploadUrl = await minioClient.presignedPutObject('user-profiles', objectName, 5 * 60);
 
-        // Generate public URL for accessing the image
-        const publicUrl = `http://${process.env.MINIO_ENDPOINT}:${process.env.MINIO_PORT}/user-profiles/${objectName}`;
+        // Generate public URL for accessing the image (via Caddy proxy)
+        const publicBase = (process.env.MINIO_PUBLIC_URL || 'https://localhost/files').replace(/\/$/, '');
+        const publicUrl = `${publicBase}/user-profiles/${objectName}`;
 
         res.json({ uploadUrl, publicUrl, objectName });
     } catch (e) {

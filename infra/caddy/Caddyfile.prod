@@ -15,6 +15,14 @@
 https://${DOMAIN} {
     # No tls directive - Caddy auto-provisions Let's Encrypt cert
 
+    # MinIO public file access (images, uploads)
+    handle /files/* {
+        uri strip_prefix /files
+        reverse_proxy http://realstate-minio:9000 {
+            header_up Host {host}
+        }
+    }
+
     # Zitadel IdP callbacks (Google OAuth etc.)
     handle /idps/* {
         reverse_proxy http://realstate-zitadel:8080 {
@@ -58,8 +66,13 @@ https://${DOMAIN} {
     }
 }
 
-# Zitadel OIDC API direct access (for token validation)
+# Zitadel OIDC API direct access (for token validation only)
+# /ui/console is blocked here - admin access requires SSH tunnel to port 8080
 https://${DOMAIN}:8443 {
+    handle /ui/console* {
+        respond "Forbidden" 403
+    }
+
     reverse_proxy http://realstate-zitadel:8080 {
         header_up Host {host}
         header_up X-Forwarded-Proto https

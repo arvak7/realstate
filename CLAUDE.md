@@ -141,6 +141,33 @@ User → "Iniciar Sessió" → https://localhost/ui/v2/login (Zitadel Login V2 v
 - Login V2, frontend, backend API, and IdP callbacks all served through `https://localhost`
 - Run `cd infra && bash mkcert-setup.sh` to install/regenerate certs
 
+### Zitadel Admin Console (Security)
+La consola d'administració de Zitadel (`/ui/console`) és accessible a qualsevol usuari autenticat per disseny (Zitadel ho permet per self-service), però usuaris normals no veuen res sensible. Per seguretat en producció:
+
+| Entorn | Port 8080 binding | Accés consola |
+|--------|-------------------|---------------|
+| **DEV** | `0.0.0.0` (totes les IPs) | `http://localhost:8080` |
+| **PRE/PRO** | `127.0.0.1` (només servidor) | Via SSH tunnel (veure baix) |
+
+**Credencials admin Zitadel**: `admin@realestate.localhost` / `ZITADEL_ADMIN_PASSWORD` (de `infra/.env`)
+
+**Accés en PRE/PRO via SSH tunnel:**
+```bash
+ssh -L 8080:localhost:8080 user@servidor
+# Després: http://localhost:8080
+```
+
+**A `infra/.env` per entorn:**
+```bash
+# DEV
+ZITADEL_BIND=0.0.0.0
+
+# PRE/PRO
+ZITADEL_BIND=127.0.0.1
+```
+
+El port 8443 (HTTPS proxy via Caddy) bloqueja `/ui/console` en Caddyfile.prod.
+
 ### Google OAuth Redirect URIs (Google Cloud Console)
 Only these two are needed:
 ```

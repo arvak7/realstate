@@ -180,6 +180,7 @@
         "energyLabel": "Label:",
         "emissions": "Emissions: {value} kg CO₂/m²/year",
         "imageAlt": "Image {number}",
+        "noImages": "No images",
         "contactInDevelopment": "Contact feature under development",
         "bedroomsCount": "{count} bedrooms",
         "location": "Location",

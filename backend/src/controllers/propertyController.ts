@@ -516,11 +516,9 @@ export const generateUploadUrl = async (req: AuthenticatedRequest, res: Response
 
         // expiry 15 minutes
         const presignedUrl = await minioClient.presignedPutObject(MINIO_BUCKET, filename, 15 * 60);
-        // We use env vars for constructing public URL because it might differ from internal docker URL
-        const endpoint = process.env.MINIO_ENDPOINT || 'localhost';
-        const port = process.env.MINIO_PORT || '9000';
-        const protocol = process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http';
-        const viewUrl = `${protocol}://${endpoint}:${port}/${MINIO_BUCKET}/${filename}`;
+        // MINIO_PUBLIC_URL is the base URL the browser uses to load files (via Caddy proxy)
+        const publicBase = (process.env.MINIO_PUBLIC_URL || 'https://localhost/files').replace(/\/$/, '');
+        const viewUrl = `${publicBase}/${MINIO_BUCKET}/${filename}`;
 
         res.json({ uploadUrl: presignedUrl, filename, viewUrl });
     } catch (e) {
@@ -535,10 +533,38 @@ export const getMyProperties = async (req: AuthenticatedRequest, res: Response) 
 
         const properties = await prisma.property.findMany({
             where: { ownerId: userId },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' },
+            include: {
+                _count: { select: { contacts: true, propertyViews: true, favorites: true } }
+            }
         });
 
-        res.json(properties);
+        if (properties.length === 0) {
+            return res.json([]);
+        }
+
+        // Fetch image data from Elasticsearch for all properties at once
+        const esIds = properties.map(p => p.elasticsearchId).filter(Boolean);
+        const esResults = await esClient.mget({ index: 'properties', ids: esIds });
+
+        const esDataById: Record<string, any> = {};
+        for (const doc of esResults.docs) {
+            if ((doc as any).found) {
+                esDataById[(doc as any)._id] = (doc as any)._source;
+            }
+        }
+
+        const result = properties.map(p => {
+            const esSource = esDataById[p.elasticsearchId] || {};
+            return {
+                ...p,
+                basic_info: esSource.basic_info || null,
+                images: esSource.images || [],
+                metadata: esSource.metadata || null,
+            };
+        });
+
+        res.json(result);
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Internal Server Error' });

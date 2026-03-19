@@ -83,6 +83,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [showRequirementsModal, setShowRequirementsModal] = useState(false);
+    const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
     const t = useTranslations("propertyDetail");
     const tCommon = useTranslations("common");
     const tNav = useTranslations("nav");
@@ -90,16 +91,22 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
     useEffect(() => {
         fetchProperty();
-    }, [id]);
+    }, [id, session]);
 
     const fetchProperty = async () => {
         try {
+            const headers: Record<string, string> = {};
+            const token = (session as any)?.accessToken;
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/properties/${id}`
+                `${process.env.NEXT_PUBLIC_API_URL}/properties/${id}`,
+                { headers }
             );
             if (response.ok) {
                 const data = await response.json();
                 setProperty(data);
+                setBrokenImages(new Set());
             } else {
                 console.error("Property not found");
             }
@@ -201,18 +208,20 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                             <>
                                 <div className="relative">
                                     <div className="aspect-[16/10] rounded-2xl overflow-hidden bg-neutral-warm">
-                                        {currentImage ? (
+                                        {currentImage?.url && !brokenImages.has(currentImageIndex) ? (
                                             <img
                                                 src={currentImage.url}
                                                 alt={property.basic_info.title}
                                                 className="w-full h-full object-cover"
+                                                onError={() => setBrokenImages(prev => new Set(prev).add(currentImageIndex))}
                                             />
                                         ) : (
-                                            <img
-                                                src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1200&h=750&fit=crop"
-                                                alt="Placeholder"
-                                                className="w-full h-full object-cover"
-                                            />
+                                            <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-neutral-warm text-text-secondary">
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-14 h-14 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 3l18 18M9 9.75h.008v.008H9V9.75z" />
+                                                </svg>
+                                                <span className="text-sm opacity-50">{t("noImages")}</span>
+                                            </div>
                                         )}
                                     </div>
 
@@ -267,11 +276,20 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                                                         : "opacity-60 hover:opacity-100"
                                                 }`}
                                             >
-                                                <img
-                                                    src={img.url}
-                                                    alt={t("imageAlt", { number: idx + 1 })}
-                                                    className="w-full h-full object-cover"
-                                                />
+                                                {brokenImages.has(idx) ? (
+                                                    <div className="w-full h-full bg-neutral-warm flex items-center justify-center">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909M3 3l18 18" />
+                                                        </svg>
+                                                    </div>
+                                                ) : (
+                                                    <img
+                                                        src={img.url}
+                                                        alt={t("imageAlt", { number: idx + 1 })}
+                                                        className="w-full h-full object-cover"
+                                                        onError={() => setBrokenImages(prev => new Set(prev).add(idx))}
+                                                    />
+                                                )}
                                             </button>
                                         ))}
                                     </div>
