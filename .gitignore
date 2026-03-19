@@ -62,3 +62,6 @@ infra/certs/*.pem
 # Environment-specific config (never commit real values)
 infra/.env
 docker-compose.override.yml
+
+# Claude (local settings only, no compartir)
+.claude/settings.local.json
