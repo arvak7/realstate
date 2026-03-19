@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import ClauseStatusItem from "./ClauseStatusItem";
 import { getClauseFrontend } from "@/app/lib/clauses";
+import { useSSE } from "@/app/hooks/useSSE";
 
 interface ClauseResult {
     id: string;
@@ -31,10 +32,25 @@ export default function RequirementsModal({
     const [loading, setLoading] = useState(true);
     const [requesting, setRequesting] = useState(false);
     const [error, setError] = useState("");
+    const [contactStatus, setContactStatus] = useState<'none' | 'pending' | 'accepted' | 'rejected'>('none');
+    const [sendingContact, setSendingContact] = useState(false);
+    const { subscribe } = useSSE();
 
     useEffect(() => {
         fetchAccessStatus();
+        fetchContactStatus();
     }, [propertyId]);
+
+    // Subscribe to contact_accepted SSE event
+    useEffect(() => {
+        const unsubscribe = subscribe('contact_accepted', (data: any) => {
+            if (data.propertyId === propertyId) {
+                setContactStatus('accepted');
+                fetchAccessStatus();
+            }
+        });
+        return unsubscribe;
+    }, [subscribe, propertyId]);
 
     const fetchAccessStatus = async () => {
         try {
@@ -59,6 +75,53 @@ export default function RequirementsModal({
             setError("Error loading requirements");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchContactStatus = async () => {
+        try {
+            const res = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/properties/${propertyId}/contact-status`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${(session as any)?.accessToken}`,
+                    },
+                }
+            );
+            if (res.ok) {
+                const data = await res.json();
+                if (data.contact) {
+                    setContactStatus(data.contact.status as 'pending' | 'accepted' | 'rejected');
+                } else {
+                    setContactStatus('none');
+                }
+            }
+        } catch (err) {
+            // silently ignore contact status errors
+        }
+    };
+
+    const handleRequestContact = async () => {
+        setSendingContact(true);
+        try {
+            const res = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/properties/${propertyId}/contact`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${(session as any)?.accessToken}`,
+                    },
+                    body: JSON.stringify({ message: '' }),
+                }
+            );
+            if (res.ok || res.status === 409) {
+                setContactStatus('pending');
+            }
+        } catch (err) {
+            // silently ignore
+        } finally {
+            setSendingContact(false);
         }
     };
 
@@ -135,12 +198,38 @@ export default function RequirementsModal({
                             {clauseResults.map((clause) => {
                                 const frontend = getClauseFrontend(clause.id);
                                 return (
-                                    <ClauseStatusItem
-                                        key={clause.id}
-                                        clauseId={clause.id}
-                                        satisfied={clause.satisfied}
-                                        icon={frontend?.icon || 'shield'}
-                                    />
+                                    <div key={clause.id}>
+                                        <ClauseStatusItem
+                                            clauseId={clause.id}
+                                            satisfied={clause.satisfied}
+                                            icon={frontend?.icon || 'shield'}
+                                        />
+                                        {clause.id === 'buyer_seller_match' && (
+                                            <div className="mt-2 ml-1">
+                                                {contactStatus === 'none' && !clause.satisfied && (
+                                                    <button
+                                                        onClick={handleRequestContact}
+                                                        disabled={sendingContact}
+                                                        className="text-sm px-4 py-2 bg-kindred-dark text-white rounded-lg hover:bg-kindred-dark/90 transition-colors disabled:opacity-50"
+                                                    >
+                                                        {sendingContact ? t("buyerSellerMatch.sending") : t("buyerSellerMatch.requestContact")}
+                                                    </button>
+                                                )}
+                                                {contactStatus === 'pending' && (
+                                                    <div className="flex items-center gap-2 text-sm text-kindred-gray">
+                                                        <svg className="w-4 h-4 animate-spin text-kindred-dark" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                        </svg>
+                                                        <span>{t("buyerSellerMatch.contactPending")}</span>
+                                                    </div>
+                                                )}
+                                                {contactStatus === 'rejected' && (
+                                                    <p className="text-sm text-red-600">{t("buyerSellerMatch.contactRejected")}</p>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 );
                             })}
                         </div>

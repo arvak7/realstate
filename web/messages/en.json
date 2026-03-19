@@ -280,7 +280,11 @@
         },
         "buyerSellerMatch": {
             "name": "Contact accepted",
-            "description": "The owner must accept your contact request"
+            "description": "The owner must accept your contact request",
+            "requestContact": "Request contact",
+            "contactPending": "Request sent, waiting for owner approval",
+            "contactRejected": "Request rejected by the owner",
+            "sending": "Sending..."
         }
     },
     "auth": {

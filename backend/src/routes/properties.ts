@@ -23,6 +23,10 @@ router.delete('/:id', checkJwt, PropertyController.deleteProperty);
 router.get('/:id/photo-access', checkJwt, PropertyController.getPhotoAccess);
 router.post('/:id/photo-access', checkJwt, PropertyController.requestPhotoAccess);
 
+// Contact routes
+router.post('/:id/contact', checkJwt, PropertyController.createContact);
+router.get('/:id/contact-status', checkJwt, PropertyController.getContactStatus);
+
 // Contact management
 router.put('/contacts/:contactId/status', checkJwt, PropertyController.updateContactStatus);
 

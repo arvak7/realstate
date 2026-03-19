@@ -7,15 +7,18 @@ import { useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import LanguageSwitcher from "./LanguageSwitcher";
 import UserAvatar from "../../components/UserAvatar";
+import { useSSE } from "../../hooks/useSSE";
 
 export default function Navbar() {
     const { data: session } = useSession();
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [pendingContactCount, setPendingContactCount] = useState(0);
     const userMenuRef = useRef<HTMLDivElement>(null);
     const pathname = usePathname();
     const t = useTranslations("nav");
     const tCommon = useTranslations("common");
+    const { subscribe } = useSSE();
 
     // Sign out from NextAuth AND end the Zitadel session so the account picker shows next login
     const handleSignOut = async () => {
@@ -45,6 +48,42 @@ export default function Navbar() {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    // Fetch pending contact count and subscribe to new contact events
+    useEffect(() => {
+        if (!session) return;
+
+        const fetchPendingContacts = async () => {
+            try {
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_URL}/me/contacts?status=pending`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${(session as any).accessToken}`,
+                        },
+                    }
+                );
+                if (res.ok) {
+                    const data = await res.json();
+                    const count = Array.isArray(data)
+                        ? data.length
+                        : data?.data?.length ?? 0;
+                    setPendingContactCount(count);
+                }
+            } catch {
+                // silently ignore
+            }
+        };
+
+        fetchPendingContacts();
+    }, [session]);
+
+    useEffect(() => {
+        const unsubscribe = subscribe('contact_new', () => {
+            setPendingContactCount(prev => prev + 1);
+        });
+        return unsubscribe;
+    }, [subscribe]);
 
     return (
         <nav className="bg-white border-b border-gray-100">
@@ -120,10 +159,15 @@ export default function Navbar() {
                                         </div>
                                         <Link
                                             href="/dashboard"
-                                            className="block px-4 py-2.5 text-sm text-kindred-dark hover:bg-neutral-warm transition-colors"
+                                            className="flex items-center px-4 py-2.5 text-sm text-kindred-dark hover:bg-neutral-warm transition-colors"
                                             onClick={() => setUserMenuOpen(false)}
                                         >
                                             {t("dashboard")}
+                                            {pendingContactCount > 0 && (
+                                                <span className="ml-1.5 inline-flex items-center justify-center bg-red-500 text-white text-xs w-5 h-5 rounded-full">
+                                                    {pendingContactCount > 9 ? '9+' : pendingContactCount}
+                                                </span>
+                                            )}
                                         </Link>
                                         <Link
                                             href="/profile"
@@ -187,10 +231,15 @@ export default function Navbar() {
                                     </Link>
                                     <Link
                                         href="/dashboard"
-                                        className="text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
+                                        className="flex items-center text-kindred-dark font-medium py-3 px-4 hover:bg-neutral-warm rounded-lg transition-colors"
                                         onClick={() => setMobileMenuOpen(false)}
                                     >
                                         {t("dashboard")}
+                                        {pendingContactCount > 0 && (
+                                            <span className="ml-1.5 inline-flex items-center justify-center bg-red-500 text-white text-xs w-5 h-5 rounded-full">
+                                                {pendingContactCount > 9 ? '9+' : pendingContactCount}
+                                            </span>
+                                        )}
                                     </Link>
                                     <Link
                                         href="/profile"

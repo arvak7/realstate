@@ -6,6 +6,7 @@ import propertyRoutes from './routes/properties';
 import userRoutes from './routes/users';
 import catalogRoutes from './routes/catalogs';
 import webhookRoutes from './routes/webhooks';
+import eventsRoutes from './routes/events';
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use('/catalogs', catalogRoutes);
 app.use('/properties', propertyRoutes);
 app.use('/me', userRoutes);
 app.use('/webhooks', webhookRoutes);
+app.use('/events', eventsRoutes);
 
 app.listen(PORT, async () => {
     console.log(`Backend listening on port ${PORT}`);

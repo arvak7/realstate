@@ -286,7 +286,11 @@
         },
         "buyerSellerMatch": {
             "name": "Contacte acceptat",
-            "description": "El propietari ha d'acceptar la teva sol·licitud de contacte"
+            "description": "El propietari ha d'acceptar la teva sol·licitud de contacte",
+            "requestContact": "Sol·licitar contacte",
+            "contactPending": "Sol·licitud enviada, esperant aprovació del propietari",
+            "contactRejected": "Sol·licitud rebutjada pel propietari",
+            "sending": "Enviant..."
         }
     },
     "auth": {

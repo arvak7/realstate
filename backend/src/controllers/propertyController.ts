@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { prisma, esClient, minioClient, MINIO_BUCKET } from '../config';
+import { prisma, esClient, minioClient, MINIO_BUCKET, redis } from '../config';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { sanitizeAddress, isValidCoordinates, generatePrivacyCircleCenter } from '../utils/location';
 import { validatePrivacyRadius, FEATURES } from '../config/features';
@@ -757,7 +757,108 @@ export const updateContactStatus = async (req: AuthenticatedRequest, res: Respon
             data: { status },
         });
 
+        if (status === 'accepted') {
+            await redis.publish(`user:${contact.userId}`, JSON.stringify({
+                type: 'contact_accepted',
+                contactId: contact.id,
+                propertyId: contact.propertyId,
+            }));
+        }
+
         res.json(updated);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+export const createContact = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const buyerId = req.auth!.payload.sub;
+        const { message } = req.body || {};
+
+        const property = await prisma.property.findFirst({
+            where: { OR: [{ id }, { elasticsearchId: id }] },
+        });
+
+        if (!property) {
+            return res.status(404).json({ error: 'Property not found' });
+        }
+
+        if (property.ownerId === buyerId) {
+            return res.status(400).json({ error: 'Cannot contact own property' });
+        }
+
+        const existing = await prisma.contact.findFirst({
+            where: { propertyId: property.id, userId: buyerId, status: 'pending' },
+        });
+
+        if (existing) {
+            return res.status(409).json({ error: 'Contact request already pending', contactId: existing.id });
+        }
+
+        const contact = await prisma.contact.create({
+            data: {
+                propertyId: property.id,
+                userId: buyerId,
+                message: message || null,
+            },
+        });
+
+        const buyer = await prisma.user.findUnique({
+            where: { id: buyerId },
+            select: { name: true },
+        });
+
+        let esTitle = '';
+        try {
+            const esResult = await esClient.get({ index: 'properties', id: property.elasticsearchId });
+            esTitle = (esResult._source as any)?.basic_info?.title || '';
+        } catch (_e) {
+            // ES lookup failure is non-fatal
+        }
+
+        await redis.publish(
+            `user:${property.ownerId}`,
+            JSON.stringify({
+                type: 'contact_new',
+                contactId: contact.id,
+                propertyId: property.id,
+                propertyElasticsearchId: property.elasticsearchId,
+                buyerId,
+                buyerName: buyer?.name || 'Usuari',
+                message: message || null,
+                propertyTitle: esTitle,
+            })
+        );
+
+        res.status(201).json(contact);
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+export const getContactStatus = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const { id } = req.params;
+        const buyerId = req.auth!.payload.sub;
+
+        const property = await prisma.property.findFirst({
+            where: { OR: [{ id }, { elasticsearchId: id }] },
+        });
+
+        if (!property) {
+            return res.status(404).json({ error: 'Property not found' });
+        }
+
+        const contact = await prisma.contact.findFirst({
+            where: { propertyId: property.id, userId: buyerId },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        res.json({ contact: contact ?? null });
     } catch (e) {
         console.error(e);
         res.status(500).json({ error: 'Internal Server Error' });
