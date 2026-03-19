@@ -345,8 +345,12 @@ export const createProperty = async (req: AuthenticatedRequest, res: Response) =
 
         res.status(201).json(property);
     } catch (e) {
-        console.error(e);
-        res.status(500).json({ error: 'Failed to create property' });
+        console.error('[createProperty] Error:', e);
+        if (e instanceof Error) {
+            console.error('[createProperty] Message:', e.message);
+            console.error('[createProperty] Stack:', e.stack);
+        }
+        res.status(500).json({ error: 'Failed to create property', details: String(e) });
     }
 };
 
