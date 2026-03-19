@@ -135,6 +135,18 @@ User → "Iniciar Sessió" → https://localhost/ui/v2/login (Zitadel Login V2 v
   → Google/email/internal → Zitadel JWT → Backend validates → User auto-created in DB
 ```
 
+### Auto-Provisioning (Critical)
+The `checkJwt` middleware in `backend/src/middleware/auth.ts` automatically creates users in PostgreSQL during the first request after JWT validation. **This is critical for data consistency:**
+
+- JWT is validated by `express-oauth2-jwt-bearer`
+- Middleware calls `provisionUser()` to upsert user in PostgreSQL
+- Only after user is created, the request handler (e.g., `createProperty`) executes
+- This ensures foreign key constraints are satisfied (properties require an existing owner)
+
+**Race condition fix (2026-03-19)**: Previously, middleware called `next()` in a finally block without awaiting `provisionUser`, causing createProperty to fail with FK constraint violations. Fixed by awaiting provisioning completion before next().
+
+**Recovery**: If orphaned Elasticsearch documents exist (created before fix), run: `npx ts-node scripts/sync-es-to-postgres.ts`
+
 ### HTTPS & Certificates
 - **mkcert** generates locally-trusted certs (browser shows green padlock)
 - Caddy terminates TLS for all services on port 443
