@@ -208,14 +208,21 @@ npm run prisma:migrate -- --name init || print_warning "Les migracions ja poden 
 
 print_success "Migracions de Prisma aplicades"
 
-# Pas 4.5: Seed de la base de dades (primera vegada)
-if [ ! -f "$PROJECT_DIR/.db-seeded" ]; then
-    print_message "Pas 4.5/7: Seeding de la base de dades..."
+# Pas 4.5: Seed de la base de dades (si està buida)
+print_message "Pas 4.5/7: Comprovant si cal fer seed de la base de dades..."
+
+# Check if catalog tables are empty
+SEED_STATUS=$(node "$BACKEND_DIR/scripts/check-seed.js" 2>/dev/null || echo "ERROR")
+
+if [ "$SEED_STATUS" = "NEEDS_SEED" ]; then
+    print_message "Base de dades buida. Executant seed..."
     npm run seed
-    touch "$PROJECT_DIR/.db-seeded"
     print_success "Base de dades inicialitzada amb dades de catàleg"
+elif [ "$SEED_STATUS" = "ALREADY_SEEDED" ]; then
+    print_success "Base de dades ja té dades de catàleg (saltant seed)"
 else
-    print_success "Base de dades ja inicialitzada (saltant seed)"
+    print_warning "No es va poder comprovar l'estat de la BD. Intentant fer seed per si de cas..."
+    npm run seed || print_warning "Seed fallit (pot ser que ja estigui fet)"
 fi
 
 # Pas 5: Arrencar el backend
