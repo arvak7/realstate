@@ -215,7 +215,7 @@ const jwtCheck = auth({
 });
 
 export const checkJwt = async (req: Request, res: Response, next: NextFunction) => {
-    return jwtCheck(req, res, (err?: any) => {
+    return jwtCheck(req, res, async (err?: any) => {
         if (err) {
             return next(err);
         }
@@ -223,12 +223,10 @@ export const checkJwt = async (req: Request, res: Response, next: NextFunction) 
         const authReq = req as AuthenticatedRequest;
         const payload = authReq.auth?.payload;
         if (payload?.sub) {
-            provisionUser(payload.sub, payload as Record<string, unknown>)
-                .catch(e => console.error('[auth] provisionUser error:', e))
-                .finally(() => next());
-        } else {
-            next();
+            await provisionUser(payload.sub, payload as Record<string, unknown>)
+                .catch(e => console.error('[auth] provisionUser error:', e));
         }
+        next();
     });
 };
 
