@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
@@ -228,7 +227,6 @@ export default function DashboardPage() {
     if (!session) {
         return (
             <>
-                <Navbar />
                 <div className="min-h-screen flex items-center justify-center">
                     <p className="text-kindred-gray">{tNav("signIn")}</p>
                 </div>
@@ -269,7 +267,6 @@ export default function DashboardPage() {
 
     return (
         <>
-            <Navbar />
             <div className="min-h-screen bg-neutral-warm/30">
                 <div className="max-w-6xl mx-auto px-6 py-8">
                     <h1 className="text-3xl font-bold text-kindred-dark mb-6">{t("title")}</h1>

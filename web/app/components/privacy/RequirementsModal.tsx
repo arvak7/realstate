@@ -17,6 +17,7 @@ interface RequirementsModalProps {
     requiredClauses: string[];
     onClose: () => void;
     onAccessGranted: (images: Array<{ url: string; is_main: boolean }>) => void;
+    infoMode?: boolean;
 }
 
 export default function RequirementsModal({
@@ -24,6 +25,7 @@ export default function RequirementsModal({
     requiredClauses,
     onClose,
     onAccessGranted,
+    infoMode = false,
 }: RequirementsModalProps) {
     const { data: session } = useSession();
     const t = useTranslations("clauses");
@@ -65,16 +67,49 @@ export default function RequirementsModal({
             if (res.ok) {
                 const data = await res.json();
                 if (data.granted) {
-                    // Already granted, close modal
+                    if (infoMode) {
+                        // Info mode: just show clauses, don't auto-close
+                        setClauseResults(data.clauses || []);
+                        setLoading(false);
+                        return;
+                    }
+                    onAccessGranted(data.images || []);
                     onClose();
                     return;
                 }
                 setClauseResults(data.clauses || []);
+                // Auto-request if all satisfied
+                const allMet = (data.clauses || []).length > 0 && (data.clauses || []).every((c: any) => c.satisfied);
+                if (allMet && !infoMode) {
+                    setTimeout(() => handleRequestAccessSilent(), 100);
+                }
             }
         } catch (err) {
             setError("Error loading requirements");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRequestAccessSilent = async () => {
+        try {
+            const res = await fetch(
+                `${process.env.NEXT_PUBLIC_API_URL}/properties/${propertyId}/photo-access`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${(session as any)?.accessToken}`,
+                    },
+                }
+            );
+            const data = await res.json();
+            if (data.granted) {
+                onAccessGranted(data.images || []);
+                onClose();
+            }
+        } catch (err) {
+            // silently ignore — user can still see the modal
         }
     };
 
@@ -181,7 +216,7 @@ export default function RequirementsModal({
                         </button>
                     </div>
                     <p className="text-sm text-kindred-gray mb-4">
-                        {t("requirementsDescription")}
+                        {infoMode ? tPrivate("accessGranted") : t("requirementsDescription")}
                     </p>
                 </div>
 
@@ -240,22 +275,13 @@ export default function RequirementsModal({
                     )}
 
                     {/* Actions */}
-                    <div className="mt-6 flex gap-3">
+                    <div className="mt-6">
                         <button
                             onClick={onClose}
-                            className="flex-1 px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-kindred-gray hover:bg-gray-50 transition-colors"
+                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm font-medium text-kindred-gray hover:bg-gray-50 transition-colors"
                         >
                             {t("close")}
                         </button>
-                        {allSatisfied && (
-                            <button
-                                onClick={handleRequestAccess}
-                                disabled={requesting}
-                                className="flex-1 px-4 py-2.5 bg-kindred-dark text-white rounded-xl text-sm font-medium hover:bg-kindred-dark/90 transition-colors disabled:opacity-50"
-                            >
-                                {requesting ? t("requesting") : t("viewPhotos")}
-                            </button>
-                        )}
                     </div>
                 </div>
             </div>

@@ -1,7 +1,6 @@
 import { useTranslations } from "next-intl";
 import { setRequestLocale } from 'next-intl/server';
 import { Link } from "@/i18n/navigation";
-import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import PropertyGrid from "./components/PropertyGrid";
 import HowItWorks from "./components/HowItWorks";
@@ -18,7 +17,6 @@ export default function Home({ params }: { params: Promise<{ locale: string }> }
 
     return (
         <main className="min-h-screen bg-white text-kindred-dark">
-            <Navbar />
 
             {/* Hero Section - Kindred Style */}
             <section className="py-16 md:py-24 px-6 bg-white">

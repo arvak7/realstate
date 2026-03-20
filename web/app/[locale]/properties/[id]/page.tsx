@@ -6,7 +6,6 @@ import { useSession, signIn } from "next-auth/react";
 import { useRouter, Link } from "@/i18n/navigation";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import Navbar from "../../components/Navbar";
 import Footer from "../../components/Footer";
 import GhostImageOverlay from "@/app/components/privacy/GhostImageOverlay";
 import PrivatePropertyBadge from "@/app/components/privacy/PrivatePropertyBadge";
@@ -73,10 +72,6 @@ interface PropertyDetail {
         granted: boolean;
         requiredClauses?: string[];
     };
-    services?: Array<{
-        type: string;
-        data: Record<string, string>;
-    }>;
 }
 
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string; locale: string }> }) {
@@ -88,6 +83,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     const [loading, setLoading] = useState(true);
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [showRequirementsModal, setShowRequirementsModal] = useState(false);
+    const [requirementsInfoMode, setRequirementsInfoMode] = useState(false);
     const [brokenImages, setBrokenImages] = useState<Set<number>>(new Set());
     const t = useTranslations("propertyDetail");
     const tCommon = useTranslations("common");
@@ -134,7 +130,6 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     if (loading) {
         return (
             <div className="min-h-screen bg-white">
-                <Navbar />
                 <div className="max-w-7xl mx-auto px-6 lg:px-8 py-20">
                     <div className="animate-pulse">
                         <div className="h-8 bg-neutral-warm rounded w-48 mb-4"></div>
@@ -156,7 +151,6 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     if (!property) {
         return (
             <div className="min-h-screen bg-white">
-                <Navbar />
                 <div className="max-w-4xl mx-auto px-6 lg:px-8 py-20 text-center">
                     <h1 className="text-4xl text-kindred-dark mb-4">{t("notFound")}</h1>
                     <p className="text-kindred-gray mb-8">
@@ -178,7 +172,6 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
 
     return (
         <div className="min-h-screen bg-white">
-            <Navbar />
 
             {/* Back Navigation */}
             <div className="bg-white border-b border-gray-100">
@@ -206,6 +199,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                                 isMainSlot={true}
                                 onClick={() => {
                                     if (session) {
+                                        setRequirementsInfoMode(false);
                                         setShowRequirementsModal(true);
                                     }
                                 }}
@@ -234,6 +228,19 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                                     {/* Private badge for owner or granted access */}
                                     {property.isPrivate && !showGhost && (
                                         <PrivatePropertyBadge variant="overlay" />
+                                    )}
+
+                                    {/* Badge: private property with granted access */}
+                                    {property.isPrivate && !isOwner && property.photoAccess?.granted && (
+                                        <button
+                                            onClick={() => { setRequirementsInfoMode(true); setShowRequirementsModal(true); }}
+                                            className="absolute top-4 right-4 bg-emerald-500/90 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium inline-flex items-center gap-2 shadow-sm hover:bg-emerald-600/90 transition-colors z-10"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-4 h-4" aria-hidden="true">
+                                                <path d="M11 5a3 3 0 1 1-6 0v.5H4a2 2 0 0 0-2 2V12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7.5a2 2 0 0 0-2-2h-1V5Zm-5 0a1 1 0 1 1 2 0v.5H6V5Z" />
+                                            </svg>
+                                            {tPrivate("accessGranted")}
+                                        </button>
                                     )}
 
                                     {images.length > 1 && (
@@ -417,86 +424,55 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                         )}
 
                         {/* Services */}
-                        {property.services && property.services.length > 0 && (
-                            <div className="pt-8 border-t border-gray-100">
-                                <h2 className="text-xl font-semibold text-kindred-dark mb-4">
-                                    {tServices("availableServices")}
-                                </h2>
-                                <div className="space-y-4">
-                                    {property.services.map((service, idx) => {
-                                        if (service.type === 'professional_photos') {
-                                            return (
-                                                <div key={idx} className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-                                                    {/* Header */}
-                                                    <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-5 py-4 flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
-                                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                            </svg>
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-semibold text-white text-sm">
-                                                                {tServices("professionalPhotos.name")}
-                                                            </p>
-                                                            <p className="text-xs text-slate-300 mt-0.5">
-                                                                {tServices("professionalPhotos.description")}
-                                                            </p>
-                                                        </div>
-                                                    </div>
-                                                    {/* Contact info */}
-                                                    {(service.data?.mobile || service.data?.landline) && (
-                                                        <div className="bg-white px-5 py-4 flex flex-wrap gap-3">
-                                                            {service.data?.mobile && (
-                                                                <a
-                                                                    href={`tel:${service.data.mobile}`}
-                                                                    className="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 transition-colors group"
-                                                                >
-                                                                    <div className="w-8 h-8 rounded-lg bg-slate-800 group-hover:bg-slate-700 flex items-center justify-center flex-shrink-0 transition-colors">
-                                                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                                        </svg>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide leading-none mb-0.5">
-                                                                            {tServices("fields.mobile")}
-                                                                        </p>
-                                                                        <p className="text-sm font-semibold text-slate-800 tracking-wide">
-                                                                            {service.data.mobile}
-                                                                        </p>
-                                                                    </div>
-                                                                </a>
-                                                            )}
-                                                            {service.data?.landline && (
-                                                                <a
-                                                                    href={`tel:${service.data.landline}`}
-                                                                    className="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 transition-colors group"
-                                                                >
-                                                                    <div className="w-8 h-8 rounded-lg bg-slate-800 group-hover:bg-slate-700 flex items-center justify-center flex-shrink-0 transition-colors">
-                                                                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                                                                        </svg>
-                                                                    </div>
-                                                                    <div>
-                                                                        <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide leading-none mb-0.5">
-                                                                            {tServices("fields.landline")}
-                                                                        </p>
-                                                                        <p className="text-sm font-semibold text-slate-800 tracking-wide">
-                                                                            {service.data.landline}
-                                                                        </p>
-                                                                    </div>
-                                                                </a>
-                                                            )}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            );
-                                        }
-                                        return null;
-                                    })}
+                        <div className="pt-8 border-t border-gray-100">
+                            <h2 className="text-xl font-semibold text-kindred-dark mb-4">
+                                {tServices("availableServices")}
+                            </h2>
+                            <div className="rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
+                                {/* Header */}
+                                <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-5 py-4 flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center flex-shrink-0">
+                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-white text-sm">
+                                            {tServices("professionalPhotos.name")}
+                                        </p>
+                                        <p className="text-xs text-slate-300 mt-0.5">
+                                            {tServices("professionalPhotos.description")}
+                                        </p>
+                                    </div>
+                                </div>
+                                {/* Contact info — tap to call */}
+                                <div className="bg-white px-5 py-4 flex flex-wrap gap-3">
+                                    <a href="tel:+34612345678" className="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 transition-colors group">
+                                        <div className="w-8 h-8 rounded-lg bg-slate-800 group-hover:bg-slate-700 flex items-center justify-center flex-shrink-0 transition-colors">
+                                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide leading-none mb-0.5">{tServices("fields.mobile")}</p>
+                                            <p className="text-sm font-semibold text-slate-800 tracking-wide">+34 612 345 678</p>
+                                        </div>
+                                    </a>
+                                    <a href="tel:+34934567890" className="flex items-center gap-2.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl px-4 py-3 transition-colors group">
+                                        <div className="w-8 h-8 rounded-lg bg-slate-800 group-hover:bg-slate-700 flex items-center justify-center flex-shrink-0 transition-colors">
+                                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wide leading-none mb-0.5">{tServices("fields.landline")}</p>
+                                            <p className="text-sm font-semibold text-slate-800 tracking-wide">+34 934 567 890</p>
+                                        </div>
+                                    </a>
                                 </div>
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     {/* Sidebar */}
@@ -569,11 +545,12 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                 <RequirementsModal
                     propertyId={property.id}
                     requiredClauses={property.accessRequirements?.clauses || property.photoAccess?.requiredClauses || []}
-                    onClose={() => setShowRequirementsModal(false)}
+                    onClose={() => { setShowRequirementsModal(false); setRequirementsInfoMode(false); }}
                     onAccessGranted={(images) => {
                         // Update property images in state
                         setProperty(prev => prev ? { ...prev, images, photoAccess: { granted: true } } : prev);
                     }}
+                    infoMode={requirementsInfoMode}
                 />
             )}
 

@@ -5,9 +5,9 @@ import dynamic from "next/dynamic";
 import { Link, useRouter } from "@/i18n/navigation";
 import { useSession } from "next-auth/react";
 import { useTranslations } from "next-intl";
-import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import GhostImageOverlay from "@/app/components/privacy/GhostImageOverlay";
+import RequirementsModal from "@/app/components/privacy/RequirementsModal";
 
 // Dynamic imports for maps (SSR not supported)
 const PropertyListMap = dynamic(
@@ -42,10 +42,16 @@ interface Property {
         url: string;
         is_main: boolean;
     }>;
+    photoAccess?: {
+        granted: boolean;
+    };
+    accessRequirements?: {
+        clauses: string[];
+    };
 }
 
 export default function PropertiesPage() {
-    const { data: session } = useSession();
+    const { data: session, status: sessionStatus } = useSession();
     const router = useRouter();
     const [properties, setProperties] = useState<Property[]>([]);
     const [loading, setLoading] = useState(true);
@@ -55,13 +61,17 @@ export default function PropertiesPage() {
     const [rooms, setRooms] = useState("");
     const [viewMode, setViewMode] = useState<'grid' | 'map'>('grid');
     const [locationPopup, setLocationPopup] = useState<Property | null>(null);
+    const [modalProperty, setModalProperty] = useState<Property | null>(null);
+    const [modalInfoMode, setModalInfoMode] = useState(false);
     const t = useTranslations("properties");
     const tCommon = useTranslations("common");
     const tDetail = useTranslations("propertyDetail");
+    const tPrivate = useTranslations("privatePhotos");
 
     useEffect(() => {
+        if (sessionStatus === 'loading') return;
         fetchProperties();
-    }, []);
+    }, [session, sessionStatus]);
 
     const fetchProperties = async () => {
         try {
@@ -71,8 +81,13 @@ export default function PropertiesPage() {
             if (maxPrice) params.append("maxPrice", maxPrice);
             if (rooms) params.append("rooms", rooms);
 
+            const headers: Record<string, string> = {};
+            const token = (session as any)?.accessToken;
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+
             const response = await fetch(
-                `${process.env.NEXT_PUBLIC_API_URL}/properties?${params.toString()}`
+                `${process.env.NEXT_PUBLIC_API_URL}/properties?${params.toString()}`,
+                { headers }
             );
             const data = await response.json();
             setProperties(data.properties || []);
@@ -90,7 +105,6 @@ export default function PropertiesPage() {
 
     return (
         <div className="min-h-screen bg-white">
-            <Navbar />
 
             {/* Header */}
             <div className="bg-white border-b border-gray-100">
@@ -260,14 +274,17 @@ export default function PropertiesPage() {
                                         className="group block"
                                     >
                                         <div className="relative">
-                                            {property.is_private ? (
-                                                <div className="mb-4">
+                                            {property.is_private && !property.photoAccess?.granted ? (
+                                                <div
+                                                    className="mb-4"
+                                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setModalInfoMode(false); setModalProperty(property); }}
+                                                >
                                                     <GhostImageOverlay
                                                         totalImages={property.images?.length || 0}
                                                     />
                                                 </div>
                                             ) : (
-                                                <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-warm mb-4">
+                                                <div className="aspect-[4/3] rounded-2xl overflow-hidden bg-neutral-warm mb-4 relative">
                                                     {property.images?.[0]?.url ? (
                                                         <img
                                                             src={property.images[0].url}
@@ -280,6 +297,18 @@ export default function PropertiesPage() {
                                                             alt="Placeholder"
                                                             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                         />
+                                                    )}
+                                                    {/* Badge for private-but-accessible */}
+                                                    {property.is_private && property.photoAccess?.granted && (
+                                                        <button
+                                                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); setModalInfoMode(true); setModalProperty(property); }}
+                                                            className="absolute top-3 right-3 bg-emerald-500/90 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5 shadow-sm hover:bg-emerald-600/90 transition-colors"
+                                                        >
+                                                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5" aria-hidden="true">
+                                                                <path d="M11 5a3 3 0 1 1-6 0v.5H4a2 2 0 0 0-2 2V12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7.5a2 2 0 0 0-2-2h-1V5Zm-5 0a1 1 0 1 1 2 0v.5H6V5Z" />
+                                                            </svg>
+                                                            {tPrivate("accessGranted")}
+                                                        </button>
                                                     )}
                                                 </div>
                                             )}
@@ -343,6 +372,24 @@ export default function PropertiesPage() {
             <Footer />
 
             {/* Location popup modal */}
+            {modalProperty && (
+                <RequirementsModal
+                    propertyId={modalProperty.id}
+                    requiredClauses={modalProperty.accessRequirements?.clauses || []}
+                    onClose={() => { setModalProperty(null); setModalInfoMode(false); }}
+                    onAccessGranted={(images) => {
+                        setProperties(prev => prev.map(p =>
+                            p.id === modalProperty.id
+                                ? { ...p, images, photoAccess: { granted: true } }
+                                : p
+                        ));
+                        setModalProperty(null);
+                        setModalInfoMode(false);
+                    }}
+                    infoMode={modalInfoMode}
+                />
+            )}
+
             {locationPopup && locationPopup.location?.privacyCircle && (
                 <div
                     className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"

@@ -81,12 +81,13 @@ export const getProperties = async (req: AuthenticatedRequest, res: Response) =>
         });
 
         const currentUserId = req.auth?.payload?.sub;
-        const properties = result.hits.hits.map(hit => {
+
+        // Phase 1: map keeping real images, track ownership
+        const rawProperties = result.hits.hits.map(hit => {
             const source = hit._source as any;
             const location = source?.location || {};
-            // Check if property is private and strip image URLs (owner can always see)
             const isPrivate = source?.is_private || false;
-            const isOwner = currentUserId && source?.owner_id === currentUserId;
+            const isOwner = !!(currentUserId && source?.owner_id === currentUserId);
             return {
                 id: hit._id,
                 owner_id: source?.owner_id,
@@ -94,11 +95,12 @@ export const getProperties = async (req: AuthenticatedRequest, res: Response) =>
                 characteristics: source?.characteristics,
                 energy: source?.energy,
                 tags: source?.tags,
-                images: (isPrivate && !isOwner) ? (source?.images || []).map(() => ({ url: null, is_main: false })) : source?.images,
+                _rawImages: source?.images,   // keep real images for now
                 contact: source?.contact,
                 verifications: source?.verifications,
                 metadata: source?.metadata,
                 is_private: isPrivate,
+                _isOwner: isOwner,            // temp flag
                 location: {
                     address: location.address,
                     privacyCircle: {
@@ -108,6 +110,81 @@ export const getProperties = async (req: AuthenticatedRequest, res: Response) =>
                     },
                     isApproximate: true
                 }
+            };
+        });
+
+        // Phase 2: batch check DB access for private properties the user doesn't own
+        // NOTE: rawProperties use Elasticsearch IDs (hit._id), but PropertyPhotoAccess and
+        // Contact store propertyId referencing the PostgreSQL UUID (Property.id), not the ES ID.
+        // We must first resolve ES IDs → PG UUIDs, then query access, then map back.
+        const privateNonOwnedEsIds = rawProperties
+            .filter(p => p.is_private && !p._isOwner)
+            .map(p => p.id);
+
+        // Map from ES ID → PG UUID (needed for DB queries)
+        const esIdToPgId = new Map<string, string>();
+        // Map from PG UUID → ES ID (needed to build grantedSet by ES ID)
+        const pgIdToEsId = new Map<string, string>();
+
+        let grantedSet = new Set<string>(); // keyed by ES ID
+        if (currentUserId && privateNonOwnedEsIds.length > 0) {
+            // Resolve ES IDs to PostgreSQL UUIDs
+            const pgProperties = await prisma.property.findMany({
+                where: { elasticsearchId: { in: privateNonOwnedEsIds } },
+                select: { id: true, elasticsearchId: true },
+            });
+            for (const p of pgProperties) {
+                esIdToPgId.set(p.elasticsearchId, p.id);
+                pgIdToEsId.set(p.id, p.elasticsearchId);
+            }
+
+            const privateNonOwnedPgIds = Array.from(esIdToPgId.values());
+
+            if (privateNonOwnedPgIds.length > 0) {
+                const accesses = await prisma.propertyPhotoAccess.findMany({
+                    where: {
+                        propertyId: { in: privateNonOwnedPgIds },
+                        userId: currentUserId,
+                    },
+                    select: { propertyId: true },
+                });
+                // Convert PG UUIDs back to ES IDs for grantedSet
+                for (const a of accesses) {
+                    const esId = pgIdToEsId.get(a.propertyId);
+                    if (esId) grantedSet.add(esId);
+                }
+
+                // Also check buyer_seller_match clause: accepted contact = access granted
+                const notYetGrantedPgIds = privateNonOwnedPgIds.filter(
+                    id => !grantedSet.has(pgIdToEsId.get(id) || '')
+                );
+                if (notYetGrantedPgIds.length > 0) {
+                    const acceptedContacts = await prisma.contact.findMany({
+                        where: {
+                            propertyId: { in: notYetGrantedPgIds },
+                            userId: currentUserId,
+                            status: 'accepted',
+                        },
+                        select: { propertyId: true },
+                    });
+                    for (const c of acceptedContacts) {
+                        const esId = pgIdToEsId.get(c.propertyId);
+                        if (esId) grantedSet.add(esId);
+                    }
+                }
+            }
+        }
+
+        // Phase 3: build final response
+        const properties = rawProperties.map(({ _rawImages, _isOwner, ...p }) => {
+            if (!p.is_private) {
+                return { ...p, images: _rawImages };
+            }
+            const granted = _isOwner || grantedSet.has(p.id);
+            return {
+                ...p,
+                images: granted ? _rawImages : (_rawImages || []).map(() => ({ url: null, is_main: false })),
+                photoAccess: { granted },
             };
         });
 
@@ -200,6 +277,34 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
                     },
                 });
                 photoAccessGranted = !!access;
+
+                // Auto-evaluate: if all clauses satisfied, create record and grant
+                if (!photoAccessGranted && userId) {
+                    const requirements = (property.accessRequirements as any)?.clauses || [];
+                    if (requirements.length > 0) {
+                        const clauseResults = await Promise.all(
+                            requirements.map(async (clauseId: string) => {
+                                const clause = getClause(clauseId);
+                                if (!clause) return false;
+                                const ctx: ClauseCheckContext = {
+                                    prisma,
+                                    buyerId: userId,
+                                    sellerId: property.ownerId,
+                                    propertyId: property.id,
+                                };
+                                return clause.checkSatisfied(ctx);
+                            })
+                        );
+                        if (clauseResults.every(Boolean)) {
+                            await prisma.propertyPhotoAccess.upsert({
+                                where: { propertyId_userId: { propertyId: property.id, userId } },
+                                create: { propertyId: property.id, userId },
+                                update: {},
+                            });
+                            photoAccessGranted = true;
+                        }
+                    }
+                }
             }
 
             if (!photoAccessGranted) {
@@ -634,7 +739,23 @@ export const getPhotoAccess = async (req: AuthenticatedRequest, res: Response) =
         });
 
         if (access) {
-            return res.json({ granted: true, clauses: [] });
+            const requirements = (property.accessRequirements as any)?.clauses || [];
+            const clauseResults = await Promise.all(
+                requirements.map(async (clauseId: string) => {
+                    const clause = getClause(clauseId);
+                    if (!clause) return { id: clauseId, satisfied: true };
+                    const ctx: ClauseCheckContext = {
+                        prisma,
+                        buyerId: userId,
+                        sellerId: property.ownerId,
+                        propertyId: property.id,
+                    };
+                    const satisfied = await clause.checkSatisfied(ctx);
+                    return { id: clauseId, satisfied };
+                })
+            );
+            const esResult = await esClient.get({ index: 'properties', id: property.elasticsearchId });
+            return res.json({ granted: true, clauses: clauseResults, images: (esResult._source as any)?.images || [] });
         }
 
         // Check each clause
