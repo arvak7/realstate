@@ -1,10 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 
+interface RawCatalogItem {
+    code: string;
+    displayOrder: number;
+}
+
 interface CatalogItem {
     code: string;
     label: string;
     displayOrder: number;
+}
+
+interface RawCatalogsData {
+    types: RawCatalogItem[];
+    conditions: RawCatalogItem[];
+    orientations: RawCatalogItem[];
+    energyLabels: RawCatalogItem[];
 }
 
 interface CatalogsState {
@@ -16,25 +28,21 @@ interface CatalogsState {
     error: string | null;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost/api';
 
 export function useCatalogs(): CatalogsState {
     const t = useTranslations('catalogs');
-    const [state, setState] = useState<CatalogsState>({
-        propertyTypes: [],
-        conditions: [],
-        orientations: [],
-        energyLabels: [],
-        loading: true,
-        error: null,
-    });
+    const [raw, setRaw] = useState<RawCatalogsData | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
 
+    // Fetch raw codes once on mount — no dependency on `t` to avoid infinite refetch loop
     useEffect(() => {
         const fetchCatalogs = async () => {
             try {
-                setState(prev => ({ ...prev, loading: true, error: null }));
+                setLoading(true);
+                setError(null);
 
-                // Fetch all catalogs in parallel
                 const [typesRes, conditionsRes, orientationsRes, energyLabelsRes] = await Promise.all([
                     fetch(`${API_BASE_URL}/catalogs/property-types`),
                     fetch(`${API_BASE_URL}/catalogs/conditions`),
@@ -53,51 +61,32 @@ export function useCatalogs(): CatalogsState {
                     energyLabelsRes.json(),
                 ]);
 
-                // Combine DB codes with i18n translations
-                const propertyTypes = typesData.data.map((item: { code: string; displayOrder: number }) => ({
-                    code: item.code,
-                    label: t(`propertyTypes.${item.code}`),
-                    displayOrder: item.displayOrder,
-                }));
-
-                const conditions = conditionsData.data.map((item: { code: string; displayOrder: number }) => ({
-                    code: item.code,
-                    label: t(`conditions.${item.code}`),
-                    displayOrder: item.displayOrder,
-                }));
-
-                const orientations = orientationsData.data.map((item: { code: string; displayOrder: number }) => ({
-                    code: item.code,
-                    label: t(`orientations.${item.code}`),
-                    displayOrder: item.displayOrder,
-                }));
-
-                const energyLabels = energyLabelsData.data.map((item: { code: string; displayOrder: number }) => ({
-                    code: item.code,
-                    label: t(`energyLabels.${item.code}`),
-                    displayOrder: item.displayOrder,
-                }));
-
-                setState({
-                    propertyTypes,
-                    conditions,
-                    orientations,
-                    energyLabels,
-                    loading: false,
-                    error: null,
+                setRaw({
+                    types: typesData.data,
+                    conditions: conditionsData.data,
+                    orientations: orientationsData.data,
+                    energyLabels: energyLabelsData.data,
                 });
-            } catch (error) {
-                console.error('Error fetching catalogs:', error);
-                setState(prev => ({
-                    ...prev,
-                    loading: false,
-                    error: 'Failed to load catalogs',
-                }));
+            } catch (err) {
+                console.error('Error fetching catalogs:', err);
+                setError('Failed to load catalogs');
+            } finally {
+                setLoading(false);
             }
         };
 
         fetchCatalogs();
-    }, [t]);
+    }, []); // fetch once — translations applied at render time below
 
-    return state;
+    // Apply translations at render time so locale changes are reflected without refetching
+    if (!raw) return { propertyTypes: [], conditions: [], orientations: [], energyLabels: [], loading, error };
+
+    return {
+        propertyTypes: raw.types.map(i => ({ ...i, label: t(`propertyTypes.${i.code}`) })),
+        conditions: raw.conditions.map(i => ({ ...i, label: t(`conditions.${i.code}`) })),
+        orientations: raw.orientations.map(i => ({ ...i, label: t(`orientations.${i.code}`) })),
+        energyLabels: raw.energyLabels.map(i => ({ ...i, label: t(`energyLabels.${i.code}`) })),
+        loading,
+        error,
+    };
 }
