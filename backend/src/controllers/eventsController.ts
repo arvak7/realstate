@@ -12,9 +12,17 @@ export const sseHandler = async (req: AuthenticatedRequest, res: Response) => {
     res.flushHeaders();
 
     const channel = `user:${userId}`;
-    // Each connection gets its own subscriber instance
     const subscriber = redis.duplicate();
-    await subscriber.subscribe(channel);
+
+    try {
+        await subscriber.subscribe(channel);
+    } catch (err) {
+        console.error('[SSE] Redis subscribe failed:', err);
+        subscriber.quit();
+        res.write('data: {"type":"error","reason":"service_unavailable"}\n\n');
+        res.end();
+        return;
+    }
 
     const heartbeat = setInterval(() => {
         res.write(': heartbeat\n\n');
