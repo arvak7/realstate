@@ -82,7 +82,7 @@ export default function PropertiesPage() {
             if (rooms) params.append("rooms", rooms);
 
             const headers: Record<string, string> = {};
-            const token = (session as any)?.accessToken;
+            const token = session?.accessToken;
             if (token) headers["Authorization"] = `Bearer ${token}`;
 
             const response = await fetch(
@@ -302,7 +302,7 @@ export default function PropertiesPage() {
                                                     {property.is_private && property.photoAccess?.granted && (
                                                         <button
                                                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setModalInfoMode(true); setModalProperty(property); }}
-                                                            className="absolute top-3 right-3 bg-emerald-500/90 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5 shadow-sm hover:bg-emerald-600/90 transition-colors"
+                                                            className="absolute top-3 right-3 z-10 bg-emerald-500/90 backdrop-blur-sm text-white px-2.5 py-1 rounded-full text-xs font-medium inline-flex items-center gap-1.5 shadow-sm hover:bg-emerald-600/90 transition-colors"
                                                         >
                                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="w-3.5 h-3.5" aria-hidden="true">
                                                                 <path d="M11 5a3 3 0 1 1-6 0v.5H4a2 2 0 0 0-2 2V12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7.5a2 2 0 0 0-2-2h-1V5Zm-5 0a1 1 0 1 1 2 0v.5H6V5Z" />

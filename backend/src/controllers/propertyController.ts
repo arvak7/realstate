@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { prisma, esClient, minioClient, MINIO_BUCKET, redis } from '../config';
 import { AuthenticatedRequest } from '../middleware/auth';
 import { sanitizeAddress, isValidCoordinates, generatePrivacyCircleCenter } from '../utils/location';
-import { validatePrivacyRadius, FEATURES } from '../config/features';
+import { validatePrivacyRadius } from '../config/features';
 import { getClause, getAllClauses, ClauseCheckContext } from '../clauses';
 import { listServices as getServiceList } from '../services';
 
@@ -35,13 +35,20 @@ export const getProperties = async (req: AuthenticatedRequest, res: Response) =>
 
         if (minPrice || maxPrice) {
             const range: { gte?: number; lte?: number } = {};
-            if (minPrice) range.gte = parseFloat(minPrice as string);
-            if (maxPrice) range.lte = parseFloat(maxPrice as string);
-            filter.push({ range: { 'basic_info.price': range } });
+            const parsedMin = parseFloat(minPrice as string);
+            const parsedMax = parseFloat(maxPrice as string);
+            if (minPrice && !isNaN(parsedMin)) range.gte = parsedMin;
+            if (maxPrice && !isNaN(parsedMax)) range.lte = parsedMax;
+            if (range.gte !== undefined || range.lte !== undefined) {
+                filter.push({ range: { 'basic_info.price': range } });
+            }
         }
 
         if (rooms) {
-            filter.push({ term: { 'basic_info.rooms': parseInt(rooms as string) } });
+            const parsedRooms = parseInt(rooms as string);
+            if (!isNaN(parsedRooms)) {
+                filter.push({ term: { 'basic_info.rooms': parsedRooms } });
+            }
         }
 
         // Geo distance search using privacy circle center
@@ -68,12 +75,14 @@ export const getProperties = async (req: AuthenticatedRequest, res: Response) =>
             }
         };
 
-        const from = (parseInt(page as string) - 1) * parseInt(limit as string);
+        const pageNum = Math.max(1, parseInt(page as string) || 1);
+        const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 20));
+        const from = (pageNum - 1) * limitNum;
 
         const result = await esClient.search({
             index: 'properties',
             from,
-            size: parseInt(limit as string),
+            size: limitNum,
             body: {
                 query: esQuery,
                 sort: [{ 'metadata.created_at': 'desc' }]
@@ -191,11 +200,11 @@ export const getProperties = async (req: AuthenticatedRequest, res: Response) =>
         res.json({
             properties,
             total: (result.hits.total as any).value,
-            page: parseInt(page as string),
-            limit: parseInt(limit as string)
+            page: pageNum,
+            limit: limitNum
         });
     } catch (e) {
-        console.error(e);
+        console.error('[getProperties] Error:', e);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -243,10 +252,21 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
         }
 
         // Get full data from Elasticsearch
-        const esResult = await esClient.get({
-            index: 'properties',
-            id: property.elasticsearchId
-        });
+        let esResult;
+        try {
+            esResult = await esClient.get({
+                index: 'properties',
+                id: property.elasticsearchId
+            });
+        } catch (esErr) {
+            console.error('[getPropertyById] ES document fetch failed:', esErr);
+            return res.status(500).json({ error: 'Property data unavailable' });
+        }
+
+        if (!esResult.found) {
+            console.error('[getPropertyById] ES document not found for:', property.elasticsearchId);
+            return res.status(500).json({ error: 'Property data corrupted' });
+        }
 
         // Increment view count
         await prisma.propertyView.create({
@@ -376,7 +396,7 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
 
         res.json(response);
     } catch (e) {
-        console.error(e);
+        console.error('[getPropertyById] Error:', e);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -598,7 +618,7 @@ export const updateProperty = async (req: AuthenticatedRequest, res: Response) =
 
         res.json(updatedProperty);
     } catch (e) {
-        console.error(e);
+        console.error('[updateProperty] Error:', e);
         res.status(500).json({ error: 'Failed to update property' });
     }
 };
@@ -634,7 +654,7 @@ export const deleteProperty = async (req: AuthenticatedRequest, res: Response) =
 
         res.json({ message: 'Property deleted successfully' });
     } catch (e) {
-        console.error(e);
+        console.error('[deleteProperty] Error:', e);
         res.status(500).json({ error: 'Failed to delete property' });
     }
 };
@@ -661,7 +681,7 @@ export const generateUploadUrl = async (req: AuthenticatedRequest, res: Response
 
         res.json({ uploadUrl: presignedUrl, filename, viewUrl });
     } catch (e) {
-        console.error(e);
+        console.error('[generateUploadUrl] Error:', e);
         res.status(500).json({ error: 'Failed to generate signed URL' });
     }
 };
@@ -705,7 +725,7 @@ export const getMyProperties = async (req: AuthenticatedRequest, res: Response) 
 
         res.json(result);
     } catch (e) {
-        console.error(e);
+        console.error('[propertyController] Error:', e);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -743,7 +763,7 @@ export const getPhotoAccess = async (req: AuthenticatedRequest, res: Response) =
             const clauseResults = await Promise.all(
                 requirements.map(async (clauseId: string) => {
                     const clause = getClause(clauseId);
-                    if (!clause) return { id: clauseId, satisfied: true };
+                    if (!clause) return { id: clauseId, satisfied: false };
                     const ctx: ClauseCheckContext = {
                         prisma,
                         buyerId: userId,
@@ -754,8 +774,14 @@ export const getPhotoAccess = async (req: AuthenticatedRequest, res: Response) =
                     return { id: clauseId, satisfied };
                 })
             );
-            const esResult = await esClient.get({ index: 'properties', id: property.elasticsearchId });
-            return res.json({ granted: true, clauses: clauseResults, images: (esResult._source as any)?.images || [] });
+            let images: any[] = [];
+            try {
+                const esResult = await esClient.get({ index: 'properties', id: property.elasticsearchId });
+                images = (esResult._source as any)?.images || [];
+            } catch (_e) {
+                console.error('[getPhotoAccess] ES fetch failed for granted access');
+            }
+            return res.json({ granted: true, clauses: clauseResults, images });
         }
 
         // Check each clause
@@ -780,7 +806,7 @@ export const getPhotoAccess = async (req: AuthenticatedRequest, res: Response) =
             clauses: clauseResults,
         });
     } catch (e) {
-        console.error(e);
+        console.error('[propertyController] Error:', e);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -816,8 +842,14 @@ export const requestPhotoAccess = async (req: AuthenticatedRequest, res: Respons
 
         if (existingAccess) {
             // Already granted, return images
-            const esResult = await esClient.get({ index: 'properties', id: property.elasticsearchId });
-            return res.json({ granted: true, images: (esResult._source as any)?.images || [] });
+            let images: any[] = [];
+            try {
+                const esResult = await esClient.get({ index: 'properties', id: property.elasticsearchId });
+                images = (esResult._source as any)?.images || [];
+            } catch (_e) {
+                console.error('[requestPhotoAccess] ES fetch failed for existing access');
+            }
+            return res.json({ granted: true, images });
         }
 
         // Verify all clauses
@@ -856,10 +888,16 @@ export const requestPhotoAccess = async (req: AuthenticatedRequest, res: Respons
         });
 
         // Return images
-        const esResult = await esClient.get({ index: 'properties', id: property.elasticsearchId });
-        res.json({ granted: true, images: (esResult._source as any)?.images || [] });
+        let images: any[] = [];
+        try {
+            const esResult = await esClient.get({ index: 'properties', id: property.elasticsearchId });
+            images = (esResult._source as any)?.images || [];
+        } catch (_e) {
+            console.error('[requestPhotoAccess] ES fetch failed after granting access');
+        }
+        res.json({ granted: true, images });
     } catch (e) {
-        console.error(e);
+        console.error('[requestPhotoAccess] Error:', e);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -869,7 +907,7 @@ export const listServices = async (_req: Request, res: Response) => {
     try {
         res.json(getServiceList().map(s => ({ type: s.type, i18nKey: s.i18nKey, dataFields: s.dataFields })));
     } catch (e) {
-        console.error(e);
+        console.error('[propertyController] Error:', e);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -885,7 +923,7 @@ export const listClauses = async (_req: Request, res: Response) => {
             }));
         res.json({ clauses });
     } catch (e) {
-        console.error(e);
+        console.error('[propertyController] Error:', e);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -930,7 +968,7 @@ export const updateContactStatus = async (req: AuthenticatedRequest, res: Respon
 
         res.json(updated);
     } catch (e) {
-        console.error(e);
+        console.error('[propertyController] Error:', e);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -998,7 +1036,7 @@ export const createContact = async (req: AuthenticatedRequest, res: Response) =>
 
         res.status(201).json(contact);
     } catch (e) {
-        console.error(e);
+        console.error('[propertyController] Error:', e);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
@@ -1023,7 +1061,7 @@ export const getContactStatus = async (req: AuthenticatedRequest, res: Response)
 
         res.json({ contact: contact ?? null });
     } catch (e) {
-        console.error(e);
+        console.error('[propertyController] Error:', e);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };

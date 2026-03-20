@@ -93,7 +93,7 @@ export default function NewPropertyPage() {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${(session as any)?.accessToken}`,
+                    "Authorization": `Bearer ${session?.accessToken}`,
                 },
                 body: JSON.stringify(propertyData),
             });
@@ -463,7 +463,7 @@ export default function NewPropertyPage() {
                                 <div>
                                     <h2 className="text-2xl font-semibold text-text-primary mb-5 tracking-tight">{t("images.title")}</h2>
                                     <ImageUploader
-                                        accessToken={(session as any)?.accessToken || ""}
+                                        accessToken={session?.accessToken || ""}
                                         images={images}
                                         onChange={setImages}
                                     />

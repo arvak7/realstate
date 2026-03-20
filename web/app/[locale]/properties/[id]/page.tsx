@@ -98,7 +98,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     const fetchProperty = async () => {
         try {
             const headers: Record<string, string> = {};
-            const token = (session as any)?.accessToken;
+            const token = session?.accessToken;
             if (token) headers["Authorization"] = `Bearer ${token}`;
 
             const response = await fetch(
@@ -201,6 +201,8 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                                     if (session) {
                                         setRequirementsInfoMode(false);
                                         setShowRequirementsModal(true);
+                                    } else {
+                                        signIn("zitadel", { callbackUrl: pathname });
                                     }
                                 }}
                             />
