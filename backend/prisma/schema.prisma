@@ -59,6 +59,7 @@ model Property {
   ratings               Rating[]
   propertyVerifications PropertyVerification[]
   photoAccess           PropertyPhotoAccess[]
+  services              PropertyService[]
 
   @@index([ownerId])
   @@index([status])
@@ -182,6 +183,20 @@ model PropertyPhotoAccess {
   @@index([propertyId])
   @@index([userId])
   @@map("property_photo_access")
+}
+
+model PropertyService {
+  id          String   @id @default(uuid())
+  propertyId  String   @map("property_id")
+  serviceType String   @map("service_type")
+  active      Boolean  @default(true)
+  data        Json
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("property_services")
 }
 
 // Catalog Tables for Dynamic Dropdowns

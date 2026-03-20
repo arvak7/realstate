@@ -9,6 +9,7 @@ import ImageUploader, { UploadedImage } from "@/app/[locale]/components/ImageUpl
 import { useCatalogs } from "@/app/hooks/useCatalogs";
 import LocationPicker, { LocationData } from "@/app/components/LocationPicker";
 import ClauseSelectorPopup from "@/app/components/privacy/ClauseSelectorPopup";
+import { getEnabledServices } from "@/app/lib/services";
 
 export default function NewPropertyPage() {
     const { data: session } = useSession();
@@ -18,8 +19,10 @@ export default function NewPropertyPage() {
     const [error, setError] = useState("");
     const t = useTranslations("newProperty");
     const tNav = useTranslations("nav");
+    const tServices = useTranslations("services");
     const locale = useLocale();
     const catalogs = useCatalogs();
+    const enabledServices = getEnabledServices();
 
     const [formData, setFormData] = useState({
         title: "",
@@ -39,6 +42,7 @@ export default function NewPropertyPage() {
     });
     const [showClauseSelector, setShowClauseSelector] = useState(false);
     const [selectedClauses, setSelectedClauses] = useState<string[]>([]);
+    const [selectedServices, setSelectedServices] = useState<Array<{ type: string; data: Record<string, string> }>>([]);
     const [location, setLocation] = useState<LocationData | null>(null);
     const [images, setImages] = useState<UploadedImage[]>([]);
 
@@ -83,9 +87,10 @@ export default function NewPropertyPage() {
                 images: images,
                 contact: {},
                 isPrivate: formData.isPrivate,
-                accessRequirements: formData.isPrivate && selectedClauses.length > 0
+                accessRequirements: formData.isPrivate
                     ? { clauses: selectedClauses }
                     : null,
+                services: selectedServices,
             };
 
             const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/properties`, {
@@ -502,6 +507,81 @@ export default function NewPropertyPage() {
                             )}
                         </div>
 
+                        {/* Serveis opcionals */}
+                        {enabledServices.length > 0 && (
+                            <div>
+                                <h2 className="text-2xl font-semibold text-text-primary mb-2 tracking-tight">
+                                    {tServices("title")}
+                                </h2>
+                                <p className="text-sm text-text-secondary mb-5">
+                                    {tServices("subtitle")}
+                                </p>
+                                <div className="space-y-4">
+                                    {enabledServices.map((service) => {
+                                        const isSelected = selectedServices.some(s => s.type === service.type);
+                                        const serviceData = selectedServices.find(s => s.type === service.type)?.data || {};
+
+                                        const toggleService = (checked: boolean) => {
+                                            if (checked) {
+                                                setSelectedServices(prev => [...prev, { type: service.type, data: {} }]);
+                                            } else {
+                                                setSelectedServices(prev => prev.filter(s => s.type !== service.type));
+                                            }
+                                        };
+
+                                        const updateField = (key: string, value: string) => {
+                                            setSelectedServices(prev => prev.map(s =>
+                                                s.type === service.type
+                                                    ? { ...s, data: { ...s.data, [key]: value } }
+                                                    : s
+                                            ));
+                                        };
+
+                                        return (
+                                            <div key={service.type} className="border border-neutral-warm rounded-xl p-4">
+                                                <label className="flex items-center gap-3 cursor-pointer">
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={isSelected}
+                                                        onChange={(e) => toggleService(e.target.checked)}
+                                                        className="w-4 h-4 text-primary-dark border-neutral-warm rounded focus:ring-primary-dark"
+                                                    />
+                                                    <div>
+                                                        <span className="text-sm font-semibold text-text-primary">
+                                                            {tServices(`${service.type.replace(/_([a-z])/g, (_: string, c: string) => c.toUpperCase())}.name` as any)}
+                                                        </span>
+                                                        <p className="text-xs text-text-secondary mt-0.5">
+                                                            {tServices(`${service.type.replace(/_([a-z])/g, (_: string, c: string) => c.toUpperCase())}.description` as any)}
+                                                        </p>
+                                                    </div>
+                                                </label>
+                                                {isSelected && (
+                                                    <div className="mt-4 space-y-3 pl-7">
+                                                        {service.dataFields.map((field) => (
+                                                            <div key={field.key}>
+                                                                <label className="block text-xs font-medium text-text-primary mb-1">
+                                                                    {tServices(field.i18nKey.replace('services.fields.', 'fields.') as any)}
+                                                                    {field.required && ' *'}
+                                                                </label>
+                                                                <input
+                                                                    type={field.type === 'phone' ? 'tel' : field.type}
+                                                                    required={field.required && isSelected}
+                                                                    value={serviceData[field.key] || ''}
+                                                                    onChange={(e) => updateField(field.key, e.target.value)}
+                                                                    className="w-full px-3 py-2 border border-neutral-warm rounded-lg text-sm focus:ring-2 focus:ring-primary-dark focus:border-primary-dark"
+                                                                    placeholder={field.key === 'mobile' ? '+34 612 345 678' : field.key === 'landline' ? '+34 934 567 890' : ''}
+                                                                />
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Submit Button */}
                         <div className="flex gap-4 pt-6 border-t">
                             <button
@@ -523,12 +603,7 @@ export default function NewPropertyPage() {
                             <ClauseSelectorPopup
                                 selectedClauses={selectedClauses}
                                 onChange={setSelectedClauses}
-                                onClose={() => {
-                                    setShowClauseSelector(false);
-                                    if (selectedClauses.length === 0) {
-                                        setFormData({ ...formData, isPrivate: false });
-                                    }
-                                }}
+                                onClose={() => setShowClauseSelector(false)}
                             />
                         )}
                     </form>

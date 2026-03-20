@@ -417,6 +417,20 @@
             "statusError": "Error actualitzant l'estat"
         }
     },
+    "services": {
+        "title": "Serveis opcionals",
+        "subtitle": "Ofereix serveis addicionals als compradors interessats",
+        "professionalPhotos": {
+            "name": "Fotos professionals",
+            "description": "Ofereix servei de fotografia professional als interessats",
+            "phoneLabel": "Telèfon de contacte"
+        },
+        "fields": {
+            "mobile": "Mòbil",
+            "landline": "Telèfon fix"
+        },
+        "availableServices": "Serveis disponibles"
+    },
     "metadata": {
         "title": "Immobles - Troba el teu proper llar",
         "description": "Descobreix propietats úniques a Catalunya i les Illes Balears. Compra, lloga o ven amb total confiança."

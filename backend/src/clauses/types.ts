@@ -11,6 +11,8 @@ export interface ClauseDefinition {
     id: string;
     // i18n key used by frontend to display name/description
     i18nKey: string;
+    // Whether this clause is available for selection (disabled = hidden from UI and listClauses)
+    enabled: boolean;
     // Check if this clause is satisfied for a given buyer
     checkSatisfied: (ctx: ClauseCheckContext) => Promise<boolean>;
 }

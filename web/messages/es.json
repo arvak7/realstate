@@ -411,6 +411,20 @@
             "statusError": "Error actualizando el estado"
         }
     },
+    "services": {
+        "title": "Servicios opcionales",
+        "subtitle": "Ofrece servicios adicionales a los compradores interesados",
+        "professionalPhotos": {
+            "name": "Fotos profesionales",
+            "description": "Ofrece servicio de fotografía profesional a los interesados",
+            "phoneLabel": "Teléfono de contacto"
+        },
+        "fields": {
+            "mobile": "Móvil",
+            "landline": "Teléfono fijo"
+        },
+        "availableServices": "Servicios disponibles"
+    },
     "metadata": {
         "title": "Inmuebles - Encuentra tu próximo hogar",
         "description": "Descubre propiedades únicas en Cataluña y las Islas Baleares. Compra, alquila o vende con total confianza."

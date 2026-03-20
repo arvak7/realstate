@@ -4,6 +4,7 @@ import { AuthenticatedRequest } from '../middleware/auth';
 import { sanitizeAddress, isValidCoordinates, generatePrivacyCircleCenter } from '../utils/location';
 import { validatePrivacyRadius, FEATURES } from '../config/features';
 import { getClause, getAllClauses, ClauseCheckContext } from '../clauses';
+import { listServices as getServiceList } from '../services';
 
 export const getProperties = async (req: AuthenticatedRequest, res: Response) => {
     try {
@@ -137,7 +138,8 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
                         email: true,
                         identityVerified: true
                     }
-                }
+                },
+                services: true
             }
         });
 
@@ -153,7 +155,8 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
                             email: true,
                             identityVerified: true
                         }
-                    }
+                    },
+                    services: true
                 }
             });
         }
@@ -228,7 +231,11 @@ export const getPropertyById = async (req: AuthenticatedRequest, res: Response) 
                 : esSource.images,
             contact: esSource.contact,
             verifications: esSource.verifications,
-            metadata: esSource.metadata
+            metadata: esSource.metadata,
+            services: ((property as any).services || []).filter((s: any) => s.active).map((s: any) => ({
+                type: s.serviceType,
+                data: s.data,
+            }))
         };
 
         // Add photo access info for private properties
@@ -342,6 +349,16 @@ export const createProperty = async (req: AuthenticatedRequest, res: Response) =
                 accessRequirements: propertyData.accessRequirements || null
             }
         });
+
+        if (Array.isArray(propertyData.services) && propertyData.services.length > 0) {
+            await prisma.propertyService.createMany({
+                data: propertyData.services.map((s: any) => ({
+                    propertyId: property.id,
+                    serviceType: s.type,
+                    data: s.data || {},
+                }))
+            });
+        }
 
         res.status(201).json(property);
     } catch (e) {
@@ -460,6 +477,19 @@ export const updateProperty = async (req: AuthenticatedRequest, res: Response) =
                 status: propertyData.status
             }
         });
+
+        if (propertyData.services !== undefined) {
+            await prisma.propertyService.deleteMany({ where: { propertyId: property.id } });
+            if (Array.isArray(propertyData.services) && propertyData.services.length > 0) {
+                await prisma.propertyService.createMany({
+                    data: propertyData.services.map((s: any) => ({
+                        propertyId: property.id,
+                        serviceType: s.type,
+                        data: s.data || {},
+                    }))
+                });
+            }
+        }
 
         res.json(updatedProperty);
     } catch (e) {
@@ -713,13 +743,25 @@ export const requestPhotoAccess = async (req: AuthenticatedRequest, res: Respons
     }
 };
 
-// List available clauses
+// List available services
+export const listServices = async (_req: Request, res: Response) => {
+    try {
+        res.json(getServiceList().map(s => ({ type: s.type, i18nKey: s.i18nKey, dataFields: s.dataFields })));
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// List available clauses (only enabled ones are returned)
 export const listClauses = async (_req: Request, res: Response) => {
     try {
-        const clauses = getAllClauses().map((c) => ({
-            id: c.id,
-            i18nKey: c.i18nKey,
-        }));
+        const clauses = getAllClauses()
+            .filter((c) => c.enabled)
+            .map((c) => ({
+                id: c.id,
+                i18nKey: c.i18nKey,
+            }));
         res.json({ clauses });
     } catch (e) {
         console.error(e);
@@ -791,11 +833,11 @@ export const createContact = async (req: AuthenticatedRequest, res: Response) =>
         }
 
         const existing = await prisma.contact.findFirst({
-            where: { propertyId: property.id, userId: buyerId, status: 'pending' },
+            where: { propertyId: property.id, userId: buyerId, status: { in: ['pending', 'accepted'] } },
         });
 
         if (existing) {
-            return res.status(409).json({ error: 'Contact request already pending', contactId: existing.id });
+            return res.status(409).json({ error: 'Contact request already pending or accepted', contactId: existing.id });
         }
 
         const contact = await prisma.contact.create({

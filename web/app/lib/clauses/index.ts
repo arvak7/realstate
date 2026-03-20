@@ -7,6 +7,7 @@ const clauseRegistry: ClauseFrontend[] = [
         icon: 'shield',
         order: 1,
         actionType: 'external',
+        enabled: false,
     },
     {
         id: 'buyer_seller_match',
@@ -14,6 +15,7 @@ const clauseRegistry: ClauseFrontend[] = [
         icon: 'handshake',
         order: 2,
         actionType: 'in-app',
+        enabled: true,
     },
 ];
 
@@ -22,7 +24,9 @@ export function getClauseFrontend(id: string): ClauseFrontend | undefined {
 }
 
 export function getAllClausesFrontend(): ClauseFrontend[] {
-    return [...clauseRegistry].sort((a, b) => a.order - b.order);
+    return [...clauseRegistry]
+        .filter((c) => c.enabled)
+        .sort((a, b) => a.order - b.order);
 }
 
 export type { ClauseFrontend, ClauseStatus } from './types';

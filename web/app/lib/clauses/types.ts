@@ -5,6 +5,8 @@ export interface ClauseFrontend {
     order: number;
     // What action type the buyer needs to take
     actionType: 'external' | 'in-app';
+    // Whether this clause is available for selection (disabled = hidden from selector UI)
+    enabled: boolean;
 }
 
 export interface ClauseStatus {

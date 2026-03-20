@@ -30,9 +30,5 @@ export const redis = new Redis({
     port: parseInt(process.env.REDIS_PORT || '6379'),
 });
 
-export const redisSub = new Redis({
-    host: process.env.REDIS_HOST || 'localhost',
-    port: parseInt(process.env.REDIS_PORT || '6379'),
-});
 
 export const PORT = process.env.PORT || 3002;

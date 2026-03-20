@@ -411,6 +411,20 @@
             "statusError": "Error updating status"
         }
     },
+    "services": {
+        "title": "Optional services",
+        "subtitle": "Offer additional services to interested buyers",
+        "professionalPhotos": {
+            "name": "Professional photos",
+            "description": "Offer professional photography service to interested buyers",
+            "phoneLabel": "Contact phone"
+        },
+        "fields": {
+            "mobile": "Mobile",
+            "landline": "Landline"
+        },
+        "availableServices": "Available services"
+    },
     "metadata": {
         "title": "Properties - Find your next home",
         "description": "Discover unique properties in Catalonia and the Balearic Islands. Buy, rent or sell with complete confidence."

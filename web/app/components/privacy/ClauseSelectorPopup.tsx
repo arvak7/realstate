@@ -48,7 +48,6 @@ export default function ClauseSelectorPopup({
 }: ClauseSelectorPopupProps) {
   const t = useTranslations("clauses");
   const clauses = getAllClausesFrontend();
-  const noneSelected = selectedClauses.length === 0;
 
   function handleToggle(clauseId: string) {
     if (selectedClauses.includes(clauseId)) {
@@ -59,9 +58,7 @@ export default function ClauseSelectorPopup({
   }
 
   function handleConfirm() {
-    if (!noneSelected) {
-      onClose();
-    }
+    onClose();
   }
 
   return (
@@ -119,13 +116,6 @@ export default function ClauseSelectorPopup({
           })}
         </div>
 
-        {/* Warning if none selected */}
-        {noneSelected && (
-          <p className="text-xs text-amber-600 mb-4">
-            {t("minOneRequired")}
-          </p>
-        )}
-
         {/* Actions */}
         <div className="flex justify-end gap-3">
           <button
@@ -133,13 +123,12 @@ export default function ClauseSelectorPopup({
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
           >
-            {t("cancel")}
+            {t("close")}
           </button>
           <button
             type="button"
             onClick={handleConfirm}
-            disabled={noneSelected}
-            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
           >
             {t("confirm")}
           </button>

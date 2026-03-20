@@ -62,7 +62,8 @@ interface PropertyDetail {
         is_main: boolean;
     }>;
     contact?: {
-        phone?: string;
+        mobile?: string;
+        landline?: string;
         email?: string;
     };
     accessRequirements?: {
@@ -72,6 +73,10 @@ interface PropertyDetail {
         granted: boolean;
         requiredClauses?: string[];
     };
+    services?: Array<{
+        type: string;
+        data: Record<string, string>;
+    }>;
 }
 
 export default function PropertyDetailPage({ params }: { params: Promise<{ id: string; locale: string }> }) {
@@ -88,6 +93,7 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
     const tCommon = useTranslations("common");
     const tNav = useTranslations("nav");
     const tPrivate = useTranslations("privatePhotos");
+    const tServices = useTranslations("services");
 
     useEffect(() => {
         fetchProperty();
@@ -406,6 +412,59 @@ export default function PropertyDetailPage({ params }: { params: Promise<{ id: s
                                             {tag}
                                         </span>
                                     ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Services */}
+                        {property.services && property.services.length > 0 && (
+                            <div className="pt-8 border-t border-gray-100">
+                                <h2 className="text-xl font-semibold text-kindred-dark mb-4">
+                                    {tServices("availableServices")}
+                                </h2>
+                                <div className="space-y-3">
+                                    {property.services.map((service, idx) => {
+                                        if (service.type === 'professional_photos') {
+                                            return (
+                                                <div key={idx} className="flex items-start gap-3 p-4 bg-blue-50 rounded-xl border border-blue-100">
+                                                    <span className="text-2xl flex-shrink-0">📸</span>
+                                                    <div>
+                                                        <p className="font-semibold text-kindred-dark text-sm">
+                                                            {tServices("professionalPhotos.name")}
+                                                        </p>
+                                                        <p className="text-xs text-kindred-gray mt-0.5">
+                                                            {tServices("professionalPhotos.description")}
+                                                        </p>
+                                                        <div className="mt-2 flex flex-col gap-1">
+                                                            {service.data?.mobile && (
+                                                                <a
+                                                                    href={`tel:${service.data.mobile}`}
+                                                                    className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:text-blue-900 transition-colors"
+                                                                >
+                                                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                                                    </svg>
+                                                                    {service.data.mobile}
+                                                                </a>
+                                                            )}
+                                                            {service.data?.landline && (
+                                                                <a
+                                                                    href={`tel:${service.data.landline}`}
+                                                                    className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:text-blue-900 transition-colors"
+                                                                >
+                                                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                                                    </svg>
+                                                                    {service.data.landline}
+                                                                </a>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    })}
                                 </div>
                             </div>
                         )}

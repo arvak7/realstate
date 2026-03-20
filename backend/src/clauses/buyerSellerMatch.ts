@@ -7,6 +7,7 @@ import { ClauseDefinition, ClauseCheckContext } from './types';
 export const buyerSellerMatchClause: ClauseDefinition = {
     id: 'buyer_seller_match',
     i18nKey: 'clauses.buyerSellerMatch',
+    enabled: true,
     checkSatisfied: async (ctx: ClauseCheckContext): Promise<boolean> => {
         const contact = await ctx.prisma.contact.findFirst({
             where: {
