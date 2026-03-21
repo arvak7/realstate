@@ -474,10 +474,10 @@ else
     ACTION1_ID=$(echo "$ACTION1_RESPONSE" | jq -r '.id // empty')
     if [ -n "$ACTION1_ID" ]; then
         log_ok "Action 'captureIdpPicture' created: $ACTION1_ID"
-        ASSIGN1_RESPONSE=$(curl $CURL_OPTS -X POST "$ZITADEL_URL/management/v1/flows/1/trigger/1/actions" \
+        ASSIGN1_RESPONSE=$(curl $CURL_OPTS -X POST "$ZITADEL_URL/management/v1/flows/1/trigger/1" \
             -H "Content-Type: application/json" \
             -H "$AUTH_HEADER" \
-            -d "{\"actionId\": \"$ACTION1_ID\"}")
+            -d "{\"actionIds\": [\"$ACTION1_ID\"]}")
         if echo "$ASSIGN1_RESPONSE" | jq -r '.details // empty' | grep -q .; then
             log_ok "Action 1 assigned to External Authentication / Post Authentication"
         else
@@ -506,10 +506,10 @@ else
     ACTION2_ID=$(echo "$ACTION2_RESPONSE" | jq -r '.id // empty')
     if [ -n "$ACTION2_ID" ]; then
         log_ok "Action 'addPictureClaim' created: $ACTION2_ID"
-        ASSIGN2_RESPONSE=$(curl $CURL_OPTS -X POST "$ZITADEL_URL/management/v1/flows/2/trigger/4/actions" \
+        ASSIGN2_RESPONSE=$(curl $CURL_OPTS -X POST "$ZITADEL_URL/management/v1/flows/2/trigger/4" \
             -H "Content-Type: application/json" \
             -H "$AUTH_HEADER" \
-            -d "{\"actionId\": \"$ACTION2_ID\"}")
+            -d "{\"actionIds\": [\"$ACTION2_ID\"]}")
         if echo "$ASSIGN2_RESPONSE" | jq -r '.details // empty' | grep -q .; then
             log_ok "Action 2 assigned to Complement Token / Pre Userinfo Creation"
         else
