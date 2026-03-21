@@ -6,18 +6,13 @@
 
 set -e  # Sortir si hi ha errors
 
-# Colors per a la sortida
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
 # Directori del projecte
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INFRA_DIR="$PROJECT_DIR/infra"
 BACKEND_DIR="$PROJECT_DIR/backend"
 WEB_DIR="$PROJECT_DIR/web"
+
+source "$PROJECT_DIR/lib/common.sh"
 
 # Load environment configuration from infra/.env
 if [ -f "$INFRA_DIR/.env" ]; then
@@ -25,7 +20,6 @@ if [ -f "$INFRA_DIR/.env" ]; then
     source "$INFRA_DIR/.env"
     set +a
 else
-    print_warning() { echo -e "\033[1;33m[$(date +'%H:%M:%S')] ⚠\033[0m $1"; }
     print_warning "No s'ha trobat infra/.env. Copia infra/.env.example a infra/.env i configura'l."
     print_warning "Usant valors per defecte (DEV/localhost)"
 fi
@@ -44,31 +38,7 @@ if [ -d "$HOME/.nvm/versions/node" ]; then
     fi
 fi
 
-# Detect docker-compose binary
-if [ -f "$PROJECT_DIR/tools/docker-compose" ]; then
-    DOCKER_COMPOSE="$PROJECT_DIR/tools/docker-compose"
-elif docker compose version >/dev/null 2>&1; then
-    DOCKER_COMPOSE="docker compose"
-else
-    DOCKER_COMPOSE="docker-compose"
-fi
-
-# Funció per imprimir missatges
-print_message() {
-    echo -e "${BLUE}[$(date +'%H:%M:%S')]${NC} $1"
-}
-
-print_success() {
-    echo -e "${GREEN}[$(date +'%H:%M:%S')] ✓${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[$(date +'%H:%M:%S')] ✗${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[$(date +'%H:%M:%S')] ⚠${NC} $1"
-}
+detect_docker_compose
 
 # Funció per esperar que un servei estigui saludable
 wait_for_service() {
@@ -101,15 +71,6 @@ wait_for_service() {
     return 0
 }
 
-# Funció per comprovar si un port està en ús
-check_port() {
-    local port=$1
-    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-        return 0
-    else
-        return 1
-    fi
-}
 
 # Banner
 echo ""
@@ -230,10 +191,9 @@ print_message "Pas 5/7: Arrencant el backend..."
 cd "$BACKEND_DIR"
 
 # Comprovar si el port 3002 està lliure
-if check_port 3002; then
-    print_error "El port 3002 ja està en ús. Aturant el procés..."
-    lsof -ti:3002 | xargs kill -9 || true
-    sleep 2
+if ! is_port_free 3002; then
+    print_warning "El port 3002 ja està en ús. Aturant el procés..."
+    kill_port 3002 || true
 fi
 
 # Arrencar backend en background
@@ -262,10 +222,9 @@ if [ ! -f .env.local ]; then
 fi
 
 # Comprovar si el port 3000 està lliure
-if check_port 3000; then
-    print_error "El port 3000 ja està en ús. Aturant el procés..."
-    lsof -ti:3000 | xargs kill -9 || true
-    sleep 2
+if ! is_port_free 3000; then
+    print_warning "El port 3000 ja està en ús. Aturant el procés..."
+    kill_port 3000 || true
 fi
 
 # Netejar lock file si existeix

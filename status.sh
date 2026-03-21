@@ -4,24 +4,11 @@
 # Autor: Antigravity
 # Data: 2026-01-27
 
-# Colors per a la sortida
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
-
 # Directori del projecte
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Detect docker-compose binary
-if [ -f "$PROJECT_DIR/tools/docker-compose" ]; then
-    DOCKER_COMPOSE="$PROJECT_DIR/tools/docker-compose"
-elif docker compose version >/dev/null 2>&1; then
-    DOCKER_COMPOSE="docker compose"
-else
-    DOCKER_COMPOSE="docker-compose"
-fi
+source "$PROJECT_DIR/lib/common.sh"
+detect_docker_compose
 
 # Funció per comprovar si un servei Docker està running
 check_docker_service() {
@@ -66,18 +53,6 @@ check_process() {
     fi
 }
 
-# Funció per comprovar si un port està en ús
-check_port() {
-    local port=$1
-    local service=$2
-    
-    if lsof -Pi :$port -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-        echo -e "${GREEN}●${NC} Port $port ($service): listening"
-    else
-        echo -e "${RED}○${NC} Port $port ($service): not listening"
-    fi
-}
-
 # Banner
 echo ""
 echo -e "${BLUE}╔════════════════════════════════════════════════╗${NC}"
@@ -119,14 +94,14 @@ echo ""
 # Informació de logs
 echo -e "${BLUE}Log Files:${NC}"
 if [ -f "$PROJECT_DIR/backend.log" ]; then
-    local backend_size=$(du -h "$PROJECT_DIR/backend.log" | cut -f1)
+    backend_size=$(du -h "$PROJECT_DIR/backend.log" | cut -f1)
     echo -e "${GREEN}●${NC} backend.log: $backend_size"
 else
     echo -e "${RED}○${NC} backend.log: not found"
 fi
 
 if [ -f "$PROJECT_DIR/frontend.log" ]; then
-    local frontend_size=$(du -h "$PROJECT_DIR/frontend.log" | cut -f1)
+    frontend_size=$(du -h "$PROJECT_DIR/frontend.log" | cut -f1)
     echo -e "${GREEN}●${NC} frontend.log: $frontend_size"
 else
     echo -e "${RED}○${NC} frontend.log: not found"

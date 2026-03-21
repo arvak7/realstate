@@ -4,36 +4,23 @@
 
 set -euo pipefail
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
-
-print_ok()      { echo -e "${GREEN}[deploy] ✓${NC} $1"; }
-print_info()    { echo -e "${BLUE}[deploy]${NC} $1"; }
-print_warn()    { echo -e "${YELLOW}[deploy] ⚠${NC} $1"; }
-print_error()   { echo -e "${RED}[deploy] ✗${NC} $1"; exit 1; }
-
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INFRA_DIR="$PROJECT_DIR/infra"
 BACKEND_DIR="$PROJECT_DIR/backend"
 WEB_DIR="$PROJECT_DIR/web"
 
-# Detect docker-compose binary
-if docker compose version >/dev/null 2>&1; then
-    DOCKER_COMPOSE="docker compose"
-elif command -v docker-compose >/dev/null 2>&1; then
-    DOCKER_COMPOSE="docker-compose"
-elif [ -f "$PROJECT_DIR/tools/docker-compose" ]; then
-    DOCKER_COMPOSE="$PROJECT_DIR/tools/docker-compose"
-else
-    print_error "docker-compose not found"
-fi
+source "$PROJECT_DIR/lib/common.sh"
+detect_docker_compose
+
+# Deploy-specific aliases that match the original deploy.sh style
+print_ok()      { print_success "$1"; }
+print_info()    { print_message "$1"; }
+print_warn()    { print_warning "$1"; }
 
 # Load environment
 if [ ! -f "$INFRA_DIR/.env" ]; then
     print_error "infra/.env not found. Create it from infra/.env.example"
+    exit 1
 fi
 
 set -a && source "$INFRA_DIR/.env" && set +a
@@ -70,6 +57,7 @@ print_ok "Frontend built"
 print_info "Pas 4/8: Generating Caddyfile..."
 if ! command -v envsubst >/dev/null 2>&1; then
     print_error "envsubst not found. Run: apt install gettext-base"
+    exit 1
 fi
 envsubst < "$INFRA_DIR/caddy/Caddyfile.prod" > "$INFRA_DIR/caddy/Caddyfile"
 print_ok "Caddyfile generated (Let's Encrypt mode, domain: ${DOMAIN})"
