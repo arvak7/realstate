@@ -48,6 +48,8 @@ function resolveAuthProvider(payload: Record<string, unknown>): string {
 }
 
 // Fetch exact IdP name from Zitadel and update authProvider in DB.
+// Also extracts the Google profile picture from the IdP intent event store
+// and stores it in Zitadel user metadata (so Complement Token action injects it into JWT).
 async function syncIdpFromZitadel(userId: string): Promise<void> {
     const pat = getAdminPat();
     if (!pat) return;
@@ -72,8 +74,78 @@ async function syncIdpFromZitadel(userId: string): Promise<void> {
             },
         });
         console.log(`[auth] Refined authProvider to '${provider}' for user ${userId}`);
+
+        // Extract Google picture from the most recent IdP intent event in Zitadel's DB.
+        // The idpintent.succeeded event contains the raw Google response (base64-encoded JSON
+        // with User.picture field). This is the only reliable source of the Google profile photo.
+        if (provider === 'google') {
+            syncGooglePicture(userId, pat, issuer).catch(e =>
+                console.error('[auth] syncGooglePicture error:', e));
+        }
     } catch (err) {
         console.error('[auth] Failed to sync IdP from Zitadel:', err);
+    }
+}
+
+// Extract Google picture URL from Zitadel's IdP intent events (via Admin API)
+// and store it in user metadata so the Complement Token action injects it into JWT.
+// Runs on every Google login to keep the picture up-to-date (non-blocking, ~1-2 API calls).
+async function syncGooglePicture(userId: string, pat: string, issuer: string): Promise<void> {
+    try {
+        // Fetch the most recent idpintent.succeeded event from Zitadel's Admin API.
+        // This contains the raw Google profile (with picture) from the latest login.
+        const eventsRes = await fetch(`${issuer}/admin/v1/events/_search`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${pat}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ limit: 50, asc: false }),
+        });
+        if (!eventsRes.ok) return;
+
+        const eventsData = await eventsRes.json() as {
+            events?: Array<{ type?: { type?: string }; payload?: { userId?: string; idpUser?: string } }>;
+        };
+
+        const intentEvent = eventsData.events?.find(e =>
+            e.type?.type === 'idpintent.succeeded' && e.payload?.userId === userId
+        );
+        if (!intentEvent?.payload?.idpUser) return;
+
+        const idpUserJson = Buffer.from(intentEvent.payload.idpUser, 'base64').toString('utf-8');
+        const idpUser = JSON.parse(idpUserJson) as { User?: { picture?: string } };
+        const picture = idpUser.User?.picture;
+
+        if (!picture?.startsWith('http')) return;
+
+        // Check if the picture has changed (skip write if same URL)
+        const existing = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { oauthProfileImage: true },
+        });
+        if (existing?.oauthProfileImage === picture) return;
+
+        // Update Zitadel metadata (Complement Token action reads this for JWT injection)
+        const b64Value = Buffer.from(picture).toString('base64');
+        await fetch(`${issuer}/management/v1/users/${userId}/metadata/picture`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${pat}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ value: b64Value }),
+        });
+
+        // Update DB for immediate effect
+        await prisma.user.update({
+            where: { id: userId },
+            data: { oauthProfileImage: picture },
+        });
+
+        console.log(`[auth] Google picture updated for user ${userId}`);
+    } catch (err) {
+        console.error('[auth] Failed to sync Google picture:', err);
     }
 }
 
@@ -116,6 +188,37 @@ async function fetchZitadelUserProfile(userId: string): Promise<ZitadelUserProfi
     }
 }
 
+// Fetch picture URL from Zitadel user metadata (set by V1 Action or Admin API).
+async function fetchPictureFromMetadata(userId: string): Promise<string | null> {
+    const pat = getAdminPat();
+    if (!pat) return null;
+
+    const issuer = process.env.ZITADEL_ISSUER || 'http://localhost:8080';
+    try {
+        const res = await fetch(`${issuer}/management/v1/users/${userId}/metadata/picture`, {
+            headers: { 'Authorization': `Bearer ${pat}` },
+        });
+        if (!res.ok) return null;
+
+        const data = await res.json() as { metadata?: { value?: string } };
+        const b64 = data.metadata?.value;
+        if (!b64) return null;
+
+        // Zitadel stores metadata values as base64
+        const decoded = Buffer.from(b64, 'base64').toString('utf-8');
+
+        // V1 Actions wrap strings in extra quotes (Zitadel bug #8338)
+        const cleaned = decoded.startsWith('"') && decoded.endsWith('"')
+            ? decoded.slice(1, -1)
+            : decoded;
+
+        if (cleaned.startsWith('http')) return cleaned;
+        return null;
+    } catch {
+        return null;
+    }
+}
+
 // Auto-provision user in DB after successful Zitadel JWT validation.
 // Fetches real name/email from Zitadel Management API since Login V2 JWT lacks these claims.
 async function provisionUser(sub: string, payload: Record<string, unknown>): Promise<void> {
@@ -131,19 +234,13 @@ async function provisionUser(sub: string, payload: Record<string, unknown>): Pro
     const name = zitadelProfile?.name || (payload.name as string) || 'User';
 
     // Picture sources (in priority order):
-    // 1. JWT picture claim (from Zitadel Action addPictureClaim, if it works)
-    // 2. Zitadel profile avatarUrl (if user uploaded one)
+    // 1. JWT picture claim (from Zitadel Action addPictureClaim)
+    // 2. Zitadel user metadata "picture" (set by V1 Action captureIdpPicture or Admin API)
+    // 3. Zitadel profile avatarUrl (if user uploaded one in Zitadel)
+    const metadataPicture = await fetchPictureFromMetadata(sub);
     const oauthPicture = (typeof payload.picture === 'string' && payload.picture)
         ? payload.picture
-        : (zitadelProfile?.avatarUrl || null);
-
-    // Debug: log all picture-related data on provisioning
-    console.log(`[auth][DEBUG] User ${sub} provisioning:`, {
-        jwtPicture: payload.picture || '(none)',
-        zitadelAvatarUrl: zitadelProfile?.avatarUrl || '(none)',
-        resolvedPicture: oauthPicture || '(none)',
-        jwtClaims: Object.keys(payload),
-    });
+        : (metadataPicture || zitadelProfile?.avatarUrl || null);
 
     const authProvider = resolveAuthProvider(payload);
 
